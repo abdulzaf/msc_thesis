@@ -3,6 +3,34 @@ html, body {
     height: 100%;
     margin: 0;
 }
-#myCanvas {
+#main {
+    width: 1024px;
+    height: 682px;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-image: url('Field.png');
+    position: absolute;
+}
+.player {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    position: absolute;
+}
+.team1 {
+    background-color: blue;
+}
+.team2 {
+    background-color: red;
+}
+.test {
     background-color: black;
+}
+.test-click {
+    background-color: darkgrey;
+}
+.ball {
+    background-color: white;
+    border-color: black;
+    border-style: solid;
 }

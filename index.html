@@ -9,7 +9,12 @@
   <title>BreakAway Rink: Time</title>
 </head>
 <body>
-    <canvas id="myCanvas"></canvas>
+  <input type="file" id="file-play" onchange="loadFile(this.files[0])">
+  <button id="btn-play">Play</button>
+  <div id="score-ball">BALL: ___</div>
+  <div id="score-team">TEAM: ___</div>
+  <button id="btn-save">Save Scores</button>
+  <div id="main"></div>
 </body>
 
 <script src="script.js"></script>
