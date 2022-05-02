@@ -21,7 +21,7 @@ const FTEAM1 = 'blue';
 const FTEAM2 = 'red';
 const SCOL = '#000000';
 const SWIDTH = 2;
-var NSET = 4;
+var NSET = 2;
 var trialNo = 0;
 var IntervalS;
 var IntervalP;
