@@ -230,7 +230,7 @@ btnPlay.onclick = function() {
         frame = 0;
         frameI = 0;
 
-        alert("1. Track the white ball with the crosshairs\r\n2. When the scene freezes, click on the players that match the ball color")
+        alert("1. Track the white ball with the crosshairs\r\n2. When the scene freezes, click on the players that had matched the ball color\r\n3. Click 'Play' to start the next trial")
         // INIT TRACKING DOTS
         for (i=0; i<NSET; i++) {
             // UPDATE DOTS
