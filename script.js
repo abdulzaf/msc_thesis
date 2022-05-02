@@ -271,7 +271,7 @@ function testTeam(el) {
         txtTeam.innerHTML = 'TEAM: ' + Math.round(100*score/nclick) + '%';
         // TEST TEAM ADJ
         struct_scores.teamA.push(Math.round(100*scoreA));
-        txtTeamAdj.innerHTML = 'TEAM: ' + Math.round(100*scoreA) + '%';
+        txtTeamAdj.innerHTML = 'TEAM (ADJUSTED): ' + Math.round(100*scoreA) + '%';
         // UPDATE SCORES
         struct_scores.N.push(NSET);
         struct_scores.trial.push(trialNo)
