@@ -13,17 +13,22 @@ html, body {
     position: absolute;
 }
 .player {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    position: absolute;
-}
-.playerS {
     width: 20px;
     height: 20px;
     border-radius: 50%;
     position: absolute;
+}
+.playerS {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    position: absolute;
     opacity: 0.5;
+}
+.init-frame {
+    border-color: yellow;
+    border-style: solid;
+    border-width: 4px;
 }
 .team1 {
     background-color: blue;
@@ -33,6 +38,9 @@ html, body {
 }
 .test {
     background-color: black;
+    border-color: white;
+    border-style: solid;
+    border-style: dashed;
 }
 .test-click {
     background-color: black;
@@ -46,6 +54,8 @@ html, body {
     background-color: white;
     border-color: black;
     border-style: solid;
+    width: 40px;
+    height: 40px;
 }
 #score-ball {
     background-color: gainsboro;

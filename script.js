@@ -8,10 +8,11 @@ const txtTeamAdj = document.getElementById('score-team-adj');
 const txtLevel = document.getElementById('txt-level');
 const txtTrial = document.getElementById('txt-trial');
 const DIM = [1024, 682];
-const TARVEL = 240;
-const RAD = 20;
+const TARVEL = 320;
+const RAD = 10;
+const BRAD = 20;
 const FS = 100;
-const WIN = [15, 25];
+const WIN = [30, 45];
 const NPLAY = 11;
 const TSET = 5;
 const FBALL = '#ffffff';
@@ -20,7 +21,7 @@ const FTEAM1 = 'blue';
 const FTEAM2 = 'red';
 const SCOL = '#000000';
 const SWIDTH = 2;
-var NSET = 2;
+var NSET = 4;
 var trialNo = 0;
 var IntervalS;
 var IntervalP;
@@ -55,7 +56,8 @@ struct_stim = {
     'pid': [],
     'xy': [[], []],
     'fact': 1,
-    'pScale': []
+    'pScale': [],
+    'team': 0
 }
 // ADD DIVS
 // Ball
@@ -89,8 +91,8 @@ function createDots() {
 //#region DRAWING FUNCTIONS
 function drawFrame(id, t, pID) {
     el = document.getElementById('ball');
-    el.style.left = (struct_play.ball[id][0][t] * DIM[0] - RAD/2) + "px";
-    el.style.bottom = (struct_play.ball[id][1][t] * DIM[1] - RAD/2) + "px";
+    el.style.left = (struct_play.ball[id][0][t] * DIM[0] - BRAD/2) + "px";
+    el.style.bottom = (struct_play.ball[id][1][t] * DIM[1] - BRAD/2) + "px";
     for (i=0; i<NPLAY; i++) {
         // UPDATE DOTS
         e1 = document.getElementById('d_0_'+pID[i]);
@@ -104,6 +106,13 @@ function drawFrame(id, t, pID) {
 }
 function initStim() {
     if (frameI==3*FS) {
+        for (i=0; i<NSET; i++) {
+            // UPDATE DOTS
+            e1 = document.getElementById('d_0_'+struct_stim.pid[i]);
+            e2 = document.getElementById('d_1_'+struct_stim.pid[i]);
+            e1.classList.remove('init-frame')
+            e2.classList.remove('init-frame')
+        }
         clearInterval(IntervalS);
         clearInterval(IntervalP);
         IntervalP = setInterval(playStim, Math.round(1000/(struct_stim.fact * FS)));
@@ -122,8 +131,8 @@ function playStim() {
         frame++;
 
         // Check ball position
-        bX = struct_play.ball[struct_stim.id][0][struct_stim.start+frame] * DIM[0] + RAD/2
-        bY = DIM[1] - (struct_play.ball[struct_stim.id][1][struct_stim.start+frame] * DIM[1] + RAD/2);
+        bX = struct_play.ball[struct_stim.id][0][struct_stim.start+frame] * DIM[0] + BRAD/2
+        bY = DIM[1] - (struct_play.ball[struct_stim.id][1][struct_stim.start+frame] * DIM[1] + BRAD/2);
         // Check mouse position
         mX = mousePosition.x;
         mY = mousePosition.y;
@@ -132,6 +141,13 @@ function playStim() {
         distArr.push(dist);
     } else {
         clearInterval(IntervalP);
+        if (struct_stim.team==0) {
+            eB = document.getElementById('ball');
+            eB.style.backgroundColor = "blue"
+        } else {
+            eB = document.getElementById('ball');
+            eB.style.backgroundColor = "red"
+        }
         for (i=0; i<NSET; i++) {
             e1 = document.getElementById('d_0_'+struct_stim.pid[i]);
             e1.classList.remove('team1');
@@ -198,11 +214,14 @@ btnPlay.onclick = function() {
         // GET RANDOM START
         playDur = struct_play.ball[id][0].length;
         tStart = Math.floor(Math.random() * (playDur - winL))
-        
+        // GET RANDOM TEAM
+        tNo = Math.floor(2*Math.random());
+
         struct_stim.id = id;
         struct_stim.start = tStart;
         struct_stim.end = tStart + winL;
         struct_stim.pid = pID;
+        struct_stim.team = tNo;
 
         // GET VEL FACT
         getVel();
@@ -210,19 +229,29 @@ btnPlay.onclick = function() {
 
         frame = 0;
         frameI = 0;
-    
+
+        alert("1. Track the white ball with the crosshairs\r\n2. When the scene freezes, click on the players that match the ball color")
+        // INIT TRACKING DOTS
+        for (i=0; i<NSET; i++) {
+            // UPDATE DOTS
+            e1 = document.getElementById('d_0_'+pID[i]);
+            e2 = document.getElementById('d_1_'+pID[i]);
+            e1.classList.add('init-frame')
+            e2.classList.add('init-frame')
+        }
         clearInterval(IntervalS);
         IntervalS = setInterval(initStim, 1000/FS);
         console.log(struct_stim.pid)
     }
 }
 function testTeam(el) {
+    el.onclick = null;
     el.classList.remove('test');
     el.classList.add('test-click', 'sel-border');
     teamNo = el.id[2];
     playNo = Number(el.id.slice(4));
     playID = struct_stim.pid.indexOf(playNo)
-    if (teamNo==0) {
+    if (teamNo==struct_stim.team) {
         score++;
         scoreA += struct_stim.pScale[playID]
     }
@@ -231,7 +260,7 @@ function testTeam(el) {
         // TEST BALL
         scoreB = 0
         for (i=0; i<distArr.length; i++) {
-            if (distArr[i] < 2*RAD) {
+            if (distArr[i] < BRAD) {
                 scoreB++;
             }
         }
@@ -311,15 +340,11 @@ btnSave.onclick = function() {
 
 //#region DATA LOAD
 function loadFile(file) {
-    let reader = new FileReader();
-    reader.onload = function(e){
-        let obj = arrStr2Num(parseCSV(this.result));
-        parseData(obj)
-        createDots();
-        txtLevel.innerHTML = "DIFFICULTY: " + NSET
-        txtTrial.innerHTML = "TRIAL: " + trialNo
-    };
-    reader.readAsText(file);
+    let obj = arrStr2Num(parseCSV(file));
+    parseData(obj)
+    createDots();
+    txtLevel.innerHTML = "DIFFICULTY: " + NSET
+    txtTrial.innerHTML = "TRIAL: " + trialNo
   }
 function parseCSV(str) {
     var arr = [];
@@ -390,6 +415,10 @@ $(document).bind('mousemove', function(e) {
     mousePosition = {'x': e.pageX - container.offsetLeft, 'y': e.pageY - container.offsetTop};
 });
 window.onload = function() {
+    const url = "https://raw.githubusercontent.com/abdulzaf/msc_thesis/main/play1.csv"
+    fetch(url)
+    .then( r => r.text() )
+    .then( t => loadFile(t) )
     //canvas.width  = window.innerWidth;
     //canvas.height = window.innerHeight;
     //ctx_rect= context.canvas.getBoundingClientRect();
