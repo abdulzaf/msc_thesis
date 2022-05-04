@@ -37,17 +37,11 @@ html, body {
     background-color: red;
 }
 .test {
-    background-color: black;
-    border-color: white;
-    border-style: solid;
-    border-style: dashed;
+    visibility: hidden;
 }
-.test-click {
-    background-color: black;
-}
-.sel-border {
-    border-color: cyan;
-    border-width: 8px;
+.result {
+    border-color: yellow;
+    border-width: 2px;
     border-style: solid;
 }
 .ball {
