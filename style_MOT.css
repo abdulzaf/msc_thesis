@@ -1,9 +1,11 @@
-html, body {
-    width:  100%;
+html,
+body {
+    width: 100%;
     height: 100%;
     margin: 0;
     cursor: crosshair;
 }
+
 #main {
     width: 1024px;
     height: 682px;
@@ -12,12 +14,14 @@ html, body {
     background-image: url('Field.png');
     position: absolute;
 }
+
 .player {
     width: 20px;
     height: 20px;
     border-radius: 50%;
     position: absolute;
 }
+
 .playerS {
     width: 15px;
     height: 15px;
@@ -25,25 +29,38 @@ html, body {
     position: absolute;
     opacity: 0.5;
 }
+
 .init-frame {
     border-color: yellow;
     border-style: solid;
     border-width: 4px;
 }
+
 .team1 {
     background-color: blue;
 }
+
 .team2 {
     background-color: red;
 }
+
 .test {
-    visibility: hidden;
+    background-color: black;
+    border-color: white;
+    border-style: solid;
+    border-style: dashed;
 }
-.result {
-    border-color: yellow;
-    border-width: 2px;
+
+.test-click {
+    background-color: black;
+}
+
+.sel-border {
+    border-color: cyan;
+    border-width: 8px;
     border-style: solid;
 }
+
 .ball {
     background-color: white;
     border-color: black;
@@ -51,6 +68,7 @@ html, body {
     width: 40px;
     height: 40px;
 }
+
 #score-ball {
     background-color: gainsboro;
     font-weight: bold;
@@ -61,6 +79,7 @@ html, body {
     top: 100px;
     text-align: center;
 }
+
 #score-team {
     background-color: gainsboro;
     font-weight: bold;
@@ -71,6 +90,7 @@ html, body {
     top: 150px;
     text-align: center;
 }
+
 #score-team-adj {
     background-color: gainsboro;
     font-weight: bold;
@@ -81,6 +101,7 @@ html, body {
     top: 200px;
     text-align: center;
 }
+
 .txt-visible {
     visibility: hidden;
 }
