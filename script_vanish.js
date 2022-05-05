@@ -174,7 +174,7 @@ btnPlay.onclick = function () {
     winL = (WIN[0] + Math.floor(Math.random() * (WIN[1] - WIN[0]))) * FS
     // GET RANDOM START
     playDur = struct_play.ball[id][0].length;
-    tStart = Math.floor(Math.random() * (playDur - winL))
+    tStart = playDur - winL;
     // GET RANDOM TEAM
     tNo = 0;//Math.floor(2 * Math.random());
     el = document.getElementById('ball');
@@ -348,7 +348,7 @@ $(document).bind('mousemove', function (e) {
     mousePosition = { 'x': e.pageX - container.offsetLeft, 'y': e.pageY - container.offsetTop };
 });
 window.onload = function () {
-    const url = "https://raw.githubusercontent.com/abdulzaf/msc_thesis/main/play1.csv"
+    const url = "https://raw.githubusercontent.com/abdulzaf/msc_thesis/main/S0_P0.csv"
     fetch(url)
         .then(r => r.text())
         .then(t => loadFile(t))
