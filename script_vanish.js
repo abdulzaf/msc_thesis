@@ -310,6 +310,7 @@ function arrStr2Num(arr) {
     for (i = 0; i < arr.length; i++) {
         arr[i] = arr[i].map(Number)
     }
+    console.log(arr)
     return arr
 }
 function parseData(arr) {
