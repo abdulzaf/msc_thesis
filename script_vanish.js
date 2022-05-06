@@ -11,7 +11,7 @@ const DIM = [1024, 682];
 const TARVEL = 320;
 const RAD = 10;
 const BRAD = 10;
-const FS = 100;
+const FS = 250;
 const DT = 1000 / FS;
 const WIN = [20, 30];
 const WINF = [1, 2];
@@ -23,16 +23,12 @@ const FTEAM1 = 'blue';
 const FTEAM2 = 'red';
 const SCOL = '#000000';
 const SWIDTH = 2;
-var fact = 4;
-var fs = FS * fact;
-var winF = [fs * WINF[0], fs * WINF[1]];
 var trialNo = 0;
 var IntervalS;
 var IntervalP;
 var IntervalF;
 var frame = 0;
 var frameI = 0;
-var frameF = 0;
 var score = 0;
 var scoreA = 0;
 var nclick = 0;
@@ -110,9 +106,7 @@ function initStim() {
     if (frameI == 1 * FS) {
         clearInterval(IntervalS);
         clearInterval(IntervalP);
-        IntervalP = setInterval(playStim, Math.round(1000 / fs));
-        winF = [fs * WINF[0], fs * WINF[1]];
-        frameF = winF[0] + Math.floor(Math.random() * (winF[1] - winF[0]));
+        IntervalP = setInterval(playStim, Math.round(1000 / FS));
     } else {
         drawFrame(struct_stim.id,
             struct_stim.start)
@@ -162,7 +156,6 @@ btnPlay.onclick = function () {
     // RESET SCORES
     frame = 0;
     frameI = 0;
-    frameF = 0;
     distArr = [];
     // REMOVE VISUALS
     removeDots();
@@ -186,32 +179,18 @@ btnPlay.onclick = function () {
     // Get random player
     pNo = Math.floor((NPLAY - 1) * Math.random());
 
-    getVel();
+    //getVel();
     struct_stim.id = id;
     struct_stim.start = tStart;
     struct_stim.end = tStart + winL;
     struct_test.team = tNo;
     struct_test.player = pNo;
+    console.log(winL)
+    console.log(playDur)
+    console.log(tStart)
 
     clearInterval(IntervalS);
     IntervalS = setInterval(initStim, 1000 / FS);
-}
-function getVel() {
-    bXY = [struct_play.ball[struct_stim.id][0].slice(struct_stim.end - 1 * FS),
-    struct_play.ball[struct_stim.id][1].slice(struct_stim.end - 1 * FS)];
-    bVel = [];
-    for (i = 1; i < bXY[0].length; i++) {
-        dX = DIM[0] * (bXY[0][i] - bXY[0][i - 1]);
-        dY = DIM[1] * (bXY[1][i] - bXY[1][i - 1]);
-        bVel.push(FS * Math.sqrt(dX * dX + dY * dY))
-    }
-    // Get AVG Vel
-    vSum = bVel.reduce((a, b) => a + b, 0);
-    vAvg = vSum / bVel.length;
-
-    struct_stim.fact = TARVEL / vAvg;//Math.max(...bVel);
-    //struct_scores.bVAvg.push(vAvg);
-    //struct_scores.bVAvg.push(Math.max(...bVel));
 }
 function testResult(mX, mY) {
     // TEST BALL
