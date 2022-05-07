@@ -1,6 +1,11 @@
 //#region INITIALIZATIONS
 const container = document.getElementById('main');
 const btnPlay = document.getElementById('btn-play');
+const btnSave = document.getElementById('btn-save');
+const txtIndex = document.getElementById('txt-index');
+const txtPlayer = document.getElementById('txt-players');
+const txtSwitch = document.getElementById('txt-switches');
+const txtTrial = document.getElementById('txt-trial');
 const txtBall = document.getElementById('score-ball');
 const DIM = [1024, 682];
 const BUFFER = 200;
@@ -12,10 +17,13 @@ const PCOL = ['#0000ff', '#ff0000', '#00ff00', '#ff00ff', '#00ffff', '#ffff00']
 const RPLAY = [4,6];
 const RCROSS = [3,5];
 const NBRAID = 15;
-var NPLAY = 4;
-var NCROSS = 5;
-var HVEL = 15; // deg/s
-var TARVEL = 2 * HVEL / NCROSS ; // deg/s
+const COMPLEXITY = 12;
+const TRIALLIST = [...Array(NBRAID).keys()];
+const TRIALORDER = TRIALLIST.sort(() => Math.random() - 0.5);
+var NPLAY = RPLAY[0];
+var NCROSS = RCROSS[0];
+var HVEL = 10; // deg/s
+var TARVEL = HVEL; //2 * HVEL / NCROSS ; // deg/s
 var DUR = SPAN / TARVEL; // sec
 var DX = 0.75 * (DIM[0] - 2*BUFFER) / NPLAY;
 var frameI = 0;
@@ -24,14 +32,26 @@ var IntervalI;
 var IntervalP;
 var mousePosition = { 'x': 0, 'y': 0 };
 var distArr = [];
+var mouseArr = [];
+var index = 0;
+var trialNo = 0;
 
 struct_stim = {
+    'braid': [],
+    'braidNo': []
 }
 struct_scores = {
+    'index': [],
+    'trial': [],
+    'complexity': [],
+    'nplay': [],
+    'ncross': [],
     'ball': [],
-    'team': [],
-    'ball-player': [],
-    'ball-mouse': []
+    'score': [],
+    'selectID': [],
+    'testID': [],
+    'stim': [],
+    'mouse': []
 }
 arr_braid = []
 //#endregion
@@ -44,10 +64,11 @@ window.onload = function () {
     initArrBraid();
     loadData();
     createDots();
+    createTestDots();
 };
 //#endregion
 
-//#region INTERFACE FUNCTIONS
+//#region DRAW FUNCTIONS
 // Create/Remove Dots
 function createDots() {
     // Players
@@ -64,12 +85,35 @@ function createDots() {
     div.classList.add('ball');
     document.getElementById("main").appendChild(div);
 }
+function createTestDots() {
+    // Players
+    for (i = 0; i < NPLAY; i++) {
+        var div = document.createElement("div");
+        div.id = 't' + i;
+        div.classList.add('player');
+        div.style.backgroundColor = PCOL[i];
+        document.getElementById("main").appendChild(div);
+    }
+    // Ball
+    var div = document.createElement("div");
+    div.id = 'tball';
+    div.classList.add('tball');
+    document.getElementById("main").appendChild(div);
+}
 function removeDots() {
     // Ball
     document.getElementById('ball').remove();
     // Players
     for (i = 0; i < NPLAY; i++) {
         document.getElementById('p' + i).remove();
+    }
+}
+function removeTestDots() {
+    // Ball
+    document.getElementById('tball').remove();
+    // Players
+    for (i = 0; i < NPLAY; i++) {
+        document.getElementById('t' + i).remove();
     }
 }
 function drawFrame(t) {
@@ -81,6 +125,17 @@ function drawFrame(t) {
         e1 = document.getElementById('p' + i);
         e1.style.left = struct_stim['p'+i][0][t] + "px";
         e1.style.bottom = struct_stim['p'+i][1][t] + "px";
+    }
+}
+function drawTestFrame() {
+    eB = document.getElementById('tball');
+    eB.style.left = struct_stim['ball'][0][0] + "px";
+    eB.style.bottom = struct_stim['ball'][1][0] + "px";
+    for (i = 0; i < NPLAY; i++) {
+        // UPDATE DOTS
+        e1 = document.getElementById('t' + i);
+        e1.style.left = struct_stim['p'+i][0][0] + "px";
+        e1.style.bottom = struct_stim['p'+i][1][0] + "px";
     }
 }
 function initStim() {
@@ -108,48 +163,98 @@ function playStim() {
         // Check mouse position
         mX = mousePosition.x;
         mY = mousePosition.y;
+        // Store mouse position;
+        mouseArr.push([mX,mY]);
         // Get Distance
         dist = Math.sqrt((bX - mX) * (bX - mX) + (bY - mY) * (bY - mY));
         distArr.push(dist);
     } else {
         clearInterval(IntervalP);
+        // SET TEST
+        createTestDots();
+        drawTestFrame();
         // SET TEST CLICK
-        container.onclick = function (e) {
+        /*container.onclick = function (e) {
             testClick();
+        };*/
+        for (i = 0; i < NPLAY; i++) {
+            el = document.getElementById('t' + i);
+            el.onclick = function () {
+                testClick(this);
+            }
         };
     }
 }
-btnPlay.onclick = function () {
-    // RESET CANVAS
-    container.onclick = null;
-    // RESET SCORES
-    frameP = 0;
-    frameI = 0;
-    distArr = [];
-    // REMOVE VISUALS
-    removeDots();
-    // CREATE VISUALS
-    createDots();
-    // GENERATE TRIAL
-    var braid = generateBraid(NPLAY, NCROSS);
-    var XY = generateXY(DIM, BUFFER, NCROSS, NPLAY);
-    var traj = generateTraj(braid, XY[0], XY[1], NCROSS, NPLAY);
-    var time = generateTime(DT, DUR, NCROSS);
-    interPlayers(traj[0], traj[1], time[1], time[0], NPLAY);
-    var ballTXY = generateBall(time[1], traj[0], traj[1], DUR, NCROSS, NPLAY);
-    interBall(ballTXY[0], ballTXY[1], ballTXY[2], time[0]);
-    console.log(braid);
+//#endregion DRAW
 
-    // START ANIMATION
-    clearInterval(IntervalI);
-    IntervalI = setInterval(initStim, 1000 / FS);
+//#region INTERFACE
+btnPlay.onclick = function () {
+    index++;
+    trialNo++;
+    if (trialNo>NBRAID) {
+        trialNo = 1;
+        // increase # of crosses
+        NCROSS++;
+        if (NCROSS>RCROSS[1]) {
+            NCROSS = RCROSS[0];
+            NPLAY++;
+        }
+    }
+    if (NPLAY<=RPLAY[1]) {
+        // UPDATE LABELS
+        txtIndex.innerHTML = 'INDEX: ' + index;
+        txtPlayer.innerHTML = 'PLAYERS: ' + NPLAY;
+        txtSwitch.innerHTML = 'SWITCHES: ' + NCROSS;
+        txtTrial.innerHTML = 'TRIAL: ' + trialNo;
+        // RESET SCORES
+        frameP = 0;
+        frameI = 0;
+        distArr = [];
+        mouseArr = [];
+        // REMOVE VISUALS
+        removeDots();
+        removeTestDots();
+        // CREATE VISUALS
+        createDots();
+        // GENERATE TRIAL
+        var braid = generateBraid(NPLAY, NCROSS);
+        var XY = generateXY(DIM, BUFFER, NCROSS, NPLAY);
+        var traj = generateTraj(braid, XY[0], XY[1], NCROSS, NPLAY);
+        var time = generateTime(DT, DUR, NCROSS);
+        interPlayers(traj[0], traj[1], time[1], time[0], NPLAY);
+        var ballTXY = generateBall(time[1], traj[0], traj[1], DUR, NCROSS, NPLAY);
+        interBall(ballTXY[0], ballTXY[1], ballTXY[2], time[0]);
+        console.log(braid);
+
+        // START ANIMATION
+        clearInterval(IntervalI);
+        IntervalI = setInterval(initStim, 1000 / FS);
+    } else {
+        alert('DONE')
+    }
 }
-function testClick() {
+function testClick(el) {
     for (i = 0; i < NPLAY; i++) {
         // UPDATE DOTS
-        e1 = document.getElementById('p' + i);
-        e1.style.backgroundColor = PCOL[i];
+        tEl = document.getElementById('t' + i);
+        tEl.onclick = null;;
+
+        pEl = document.getElementById('p' + i);
+        pEl.style.backgroundColor = PCOL[i];
     }
+    // UPDATE CLICKED DOT
+    playNo = el.id[1];
+    el.classList.add('test-sel');
+
+    // Get closest player to ball
+    let dBall = [];
+    bY = struct_stim['ball'][1][frameP-1];
+    for (i = 0; i < NPLAY; i++) {
+        pY = struct_stim['p'+i][1][frameP-1];
+        dBall.push((pY-bY)*(pY-bY));
+    }
+    testID = dBall.indexOf(Math.min(...dBall));
+
     // TEST BALL
     scoreB = 0
     for (i = 0; i < distArr.length; i++) {
@@ -158,20 +263,31 @@ function testClick() {
             scoreB++;
         }
     }
+
+    // UPDATE SCORES
+    struct_scores.index.push(index);
+    struct_scores.trial.push(trialNo);
+    struct_scores.complexity.push(COMPLEXITY);
+    struct_scores.nplay.push(JSON.parse(JSON.stringify(NPLAY)));
+    struct_scores.ncross.push(JSON.parse(JSON.stringify(NCROSS)));
     struct_scores.ball.push(Math.round(100 * scoreB / distArr.length));
+    struct_scores.score.push(playNo==testID);
+    struct_scores.selectID.push(playNo);
+    struct_scores.testID.push(testID);
+    struct_scores.stim.push(JSON.parse(JSON.stringify(struct_stim)));
+
+    // UPDATE INTERFACE
     txtBall.innerHTML = 'BALL: ' + struct_scores.ball[struct_scores.ball.length - 1] + '%';
 }
-//#endregion
+//#endregion INTERFACE
 
 //#region STIMULUS FUNCTIONS
 // Create a braid on nPlay strands with nCross crossings
 function generateBraid(nPlay, nCross) {
-    bNo = Math.floor(Math.random() * NBRAID);
+    bNo = TRIALORDER[trialNo];//Math.floor(Math.random() * NBRAID);
     braid = arr_braid[nPlay-1][nCross-1][0][bNo];
-    /*let braid = [];
-    for (i=0; i<nCross; i++) {
-        braid.push(Math.floor(Math.random() * (nPlay-1)));
-    }*/
+    struct_stim.braid = braid;
+    struct_stim.braidNo = bNo;
     return braid
 }
 // Create XY trajectory points based on field dimensions and buffer space
@@ -365,6 +481,17 @@ function parseData(arr) {
         }
     }
     console.log(arr_braid)
+}
+//#endregion
+
+//#region SAVE DATA
+btnSave.onclick = function () {
+    var blob = new Blob([JSON.stringify(struct_scores)], { type: "text/plain;charset=utf-8" });
+    var timeElapsed = Date.now();
+    var today = new Date(timeElapsed);
+    var fileName = today.toUTCString().replace(',', '').replace(':', '_').replace(':', '_') + '_SCORES.txt';
+    console.log(fileName)
+    saveAs(blob, fileName);
 }
 //#endregion
 
