@@ -8,6 +8,9 @@ const SPAN = DIM[0] / DRAT; // deg
 const FS = 250;
 const DT = 1/FS;
 const PCOL = ['#1f77b4', '#bcbd22', '#d62728', '#2ff7f0', '#9467bd']
+const RPLAY = [3,5];
+const RCROSS = [3,5];
+var pcID = [RPLAY[0]-1, RCROSS[0]-1]; // players, crosses
 var NPLAY = 3;
 var NCROSS = 5;
 var HVEL = 10; // deg/s
@@ -18,13 +21,17 @@ var frameI = 0;
 var frameP = 0;
 var IntervalI;
 var IntervalP;
+var obj_braid = [];
 
 struct_stim = {
 }
+arr_braid = []
 //#endregion
 
 //#region MAIN
 window.onload = function () {
+    initArrBraid();
+    loadData(RPLAY, RCROSS);
     createDots();
 };
 //#endregion
@@ -240,6 +247,69 @@ function interBall(timeB, ballX, ballY, time) {
     Object.assign(struct_stim, {ball: [JSON.parse(JSON.stringify(trajX)), JSON.parse(JSON.stringify(trajY))]});
 }
 
+//#endregion
+
+//#region LOAD DATA
+function initArrBraid() {
+    for (p=0; p<RPLAY[1]; p++) {
+        arr_braid.push([]);
+        for (c=0; c<RCROSS[1]; c++) {
+            arr_braid[p].push([]);
+        }
+    }
+}
+function loadData(rPlay, rCross) {
+    for (p=rPlay[0]; p<=rPlay[1]; p++) {
+        for (c=rCross[0]; c<=rCross[1]; c++) {
+            var url = "https://raw.githubusercontent.com/abdulzaf/msc_thesis/main/databraid/p" + p + "_c" + c + ".csv";
+            fetch(url)
+            .then(r => r.text())
+            .then(t => obj_braid = loadFile(t))
+            arr_braid[0][0].push(obj_braid)
+            console.log(arr_braid)
+        }
+    }
+}
+function fetchData(url) {
+    return fetch(url).then(res => res.text())
+  }
+function loadFile(file) {
+    let obj = arrStr2Num(parseCSV(file));
+    return obj;
+}
+function parseCSV(str) {
+    var arr = [];
+    var quote = false;  // 'true' means we're inside a quoted field
+
+    // Iterate over each character, keep track of current row and column (of the returned array)
+    for (var row = 0, col = 0, c = 0; c < str.length; c++) {
+        var cc = str[c], nc = str[c + 1];        // Current character, next character
+        arr[row] = arr[row] || [];             // Create a new row if necessary
+        arr[row][col] = arr[row][col] || '';   // Create a new column (start with empty string) if necessary
+
+        // If it's a comma and we're not in a quoted field, move on to the next column
+        if (cc == ',') { ++col; continue; }
+
+        // If it's a newline (CRLF) and we're not in a quoted field, skip the next character
+        // and move on to the next row and move to column 0 of that new row
+        if (cc == '\r' && nc == '\n' && !quote) { ++row; col = 0; ++c; continue; }
+
+        // If it's a newline (LF or CR) and we're not in a quoted field,
+        // move on to the next row and move to column 0 of that new row
+        if (cc == '\n' && !quote) { ++row; col = 0; continue; }
+        if (cc == '\r' && !quote) { ++row; col = 0; continue; }
+
+        // Otherwise, append the current character to the current column
+        arr[row][col] += cc;
+    }
+    return arr;
+}
+function arrStr2Num(arr) {
+    for (i = 0; i < arr.length; i++) {
+        arr[i] = arr[i].map(Number)
+    }
+    return arr
+}
 //#endregion
 
 //#region GENERAL FUNCTIONS
