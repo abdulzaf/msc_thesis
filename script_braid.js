@@ -1,18 +1,20 @@
 //#region INITIALIZATIONS
 const container = document.getElementById('main');
 const btnPlay = document.getElementById('btn-play');
+const txtBall = document.getElementById('score-ball');
 const DIM = [1024, 682];
 const BUFFER = 200;
 const DRAT = 40; // px/deg
 const SPAN = DIM[0] / DRAT; // deg
 const FS = 250;
 const DT = 1/FS;
-const PCOL = ['#1f77b4', '#bcbd22', '#d62728', '#2ff7f0', '#9467bd']
-const RPLAY = [3,5];
+const PCOL = ['#0000ff', '#ff0000', '#00ff00', '#ff00ff', '#00ffff', '#ffff00']
+const RPLAY = [4,6];
 const RCROSS = [3,5];
-var NPLAY = 3;
+const NBRAID = 15;
+var NPLAY = 4;
 var NCROSS = 5;
-var HVEL = 10; // deg/s
+var HVEL = 15; // deg/s
 var TARVEL = 2 * HVEL / NCROSS ; // deg/s
 var DUR = SPAN / TARVEL; // sec
 var DX = 0.75 * (DIM[0] - 2*BUFFER) / NPLAY;
@@ -20,13 +22,24 @@ var frameI = 0;
 var frameP = 0;
 var IntervalI;
 var IntervalP;
+var mousePosition = { 'x': 0, 'y': 0 };
+var distArr = [];
 
 struct_stim = {
+}
+struct_scores = {
+    'ball': [],
+    'team': [],
+    'ball-player': [],
+    'ball-mouse': []
 }
 arr_braid = []
 //#endregion
 
 //#region MAIN
+$(document).bind('mousemove', function (e) {
+    mousePosition = { 'x': e.pageX - container.offsetLeft, 'y': e.pageY - container.offsetTop };
+});
 window.onload = function () {
     initArrBraid();
     loadData();
@@ -37,11 +50,6 @@ window.onload = function () {
 //#region INTERFACE FUNCTIONS
 // Create/Remove Dots
 function createDots() {
-    // Ball
-    var div = document.createElement("div");
-    div.id = 'ball';
-    div.classList.add('ball');
-    document.getElementById("main").appendChild(div);
     // Players
     for (i = 0; i < NPLAY; i++) {
         var div = document.createElement("div");
@@ -50,6 +58,11 @@ function createDots() {
         div.style.backgroundColor = PCOL[i];
         document.getElementById("main").appendChild(div);
     }
+    // Ball
+    var div = document.createElement("div");
+    div.id = 'ball';
+    div.classList.add('ball');
+    document.getElementById("main").appendChild(div);
 }
 function removeDots() {
     // Ball
@@ -89,11 +102,20 @@ function playStim() {
     if (frameP < struct_stim.time.length) {
         drawFrame(frameP)
         frameP++;
+        // Check ball position
+        bX = struct_stim['ball'][0][frameP];
+        bY = DIM[1] - (struct_stim['ball'][1][frameP] + DRAT);
+        // Check mouse position
+        mX = mousePosition.x;
+        mY = mousePosition.y;
+        // Get Distance
+        dist = Math.sqrt((bX - mX) * (bX - mX) + (bY - mY) * (bY - mY));
+        distArr.push(dist);
     } else {
         clearInterval(IntervalP);
         // SET TEST CLICK
         container.onclick = function (e) {
-            testClick(e);
+            testClick();
         };
     }
 }
@@ -103,12 +125,13 @@ btnPlay.onclick = function () {
     // RESET SCORES
     frameP = 0;
     frameI = 0;
+    distArr = [];
     // REMOVE VISUALS
     removeDots();
     // CREATE VISUALS
     createDots();
     // GENERATE TRIAL
-    var braid = generateBraid(NCROSS, NPLAY);
+    var braid = generateBraid(NPLAY, NCROSS);
     var XY = generateXY(DIM, BUFFER, NCROSS, NPLAY);
     var traj = generateTraj(braid, XY[0], XY[1], NCROSS, NPLAY);
     var time = generateTime(DT, DUR, NCROSS);
@@ -127,16 +150,28 @@ function testClick() {
         e1 = document.getElementById('p' + i);
         e1.style.backgroundColor = PCOL[i];
     }
+    // TEST BALL
+    scoreB = 0
+    for (i = 0; i < distArr.length; i++) {
+        //scoreB += distArr[i]
+        if (distArr[i] < 1 * DRAT) {
+            scoreB++;
+        }
+    }
+    struct_scores.ball.push(Math.round(100 * scoreB / distArr.length));
+    txtBall.innerHTML = 'BALL: ' + struct_scores.ball[struct_scores.ball.length - 1] + '%';
 }
 //#endregion
 
 //#region STIMULUS FUNCTIONS
 // Create a braid on nPlay strands with nCross crossings
-function generateBraid(nCross, nPlay) {
-    let braid = [];
+function generateBraid(nPlay, nCross) {
+    bNo = Math.floor(Math.random() * NBRAID);
+    braid = arr_braid[nPlay-1][nCross-1][0][bNo];
+    /*let braid = [];
     for (i=0; i<nCross; i++) {
         braid.push(Math.floor(Math.random() * (nPlay-1)));
-    }
+    }*/
     return braid
 }
 // Create XY trajectory points based on field dimensions and buffer space
@@ -170,8 +205,10 @@ function generateTraj(braid, X, Y, nCross, nPlay) {
     playBraid.push(JSON.parse(JSON.stringify(players)))
     console.log(JSON.stringify(players))
     for (c=0; c<nCross; c++) {
-        let p1 = braid[c];
-        let p2 = braid[c]+1;
+        let p1 = braid[c]-1;
+        let p2 = braid[c];
+        console.log(p1)
+        console.log(p2)
         let temp1 = JSON.parse(JSON.stringify(players[p1]));
         let temp2 = JSON.parse(JSON.stringify(players[p2]));
         players[p1] = temp2;
@@ -216,10 +253,19 @@ function interPlayers(PX, PY, timeO, time, nPlay) {
 }
 // Generate Ball
 function generateBall(timeO, trajX, trajY, duration, nCross, nPlay) {
-    let timeB = makeArr(0, duration, 2*nCross+1);
+    let timeB = makeArr(0, duration, 1*nCross);
     let ballSeq = [];
-    for (t=0; t<timeB.length; t++) {
-        ballSeq.push(Math.floor(nPlay * Math.random()));
+    ballSeq.push(Math.floor(nPlay/2));
+    for (t=1; t<timeB.length; t++) {
+        prevB = ballSeq[t-1];
+        nMove = Math.ceil(1 * Math.random());
+        bDir = 2*Math.floor(2 * Math.random()) - 1;
+        if (prevB==nPlay-1) { // move up
+            bDir = -1;
+        } else if (prevB==0) { // move down
+            bDir = +1;
+        }
+        ballSeq.push(prevB + bDir * nMove);
     }
     let ballX = [];
     let ballY = [];
@@ -300,7 +346,25 @@ function arrStr2Num(arr) {
     return arr
 }
 function parseData(arr) {
-    console.log(arr)
+    var pNo = RPLAY[0];
+    var cNo = RCROSS[0];
+    var bGroup = [];
+    for (r=0; r<arr.length; r++) {
+        if (isNaN(arr[r][0])) {
+            bGroup = [];
+            for (b=0; b<NBRAID; b++) {
+                bGroup.push(JSON.parse(JSON.stringify(arr[r+b+1].slice(0, cNo))))
+            }
+            arr_braid[pNo-1][cNo-1].push(JSON.parse(JSON.stringify(bGroup)))
+
+            cNo++;
+            if (cNo>RCROSS[1]) {
+                cNo = RCROSS[0];
+                pNo++;
+            }
+        }
+    }
+    console.log(arr_braid)
 }
 //#endregion
 
