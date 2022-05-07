@@ -162,7 +162,7 @@ function generateTraj(braid, X, Y, nCross, nPlay) {
     let players = [...Array(nPlay).keys()];
     let playBraid = [];
     let trajY = [];
-    playBraid.push(players)
+    playBraid.push(JSON.parse(JSON.stringify(players)))
     console.log(JSON.stringify(players))
     for (c=0; c<nCross; c++) {
         let p1 = braid[c];
@@ -178,7 +178,8 @@ function generateTraj(braid, X, Y, nCross, nPlay) {
     for (p=0; p<nPlay; p++) {
         trajY.push([])
         for (c=0; c<X.length; c++) {
-            trajY[p].push(Y[playBraid[c][p]])
+            yID = playBraid[c].indexOf(p);
+            trajY[p].push(JSON.parse(JSON.stringify(Y[yID])));
         }
     }
     console.log(trajY)
