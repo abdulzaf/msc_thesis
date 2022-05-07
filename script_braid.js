@@ -10,7 +10,6 @@ const DT = 1/FS;
 const PCOL = ['#1f77b4', '#bcbd22', '#d62728', '#2ff7f0', '#9467bd']
 const RPLAY = [3,5];
 const RCROSS = [3,5];
-var pcID = [RPLAY[0]-1, RCROSS[0]-1]; // players, crosses
 var NPLAY = 3;
 var NCROSS = 5;
 var HVEL = 10; // deg/s
@@ -21,7 +20,6 @@ var frameI = 0;
 var frameP = 0;
 var IntervalI;
 var IntervalP;
-var obj_braid = [];
 
 struct_stim = {
 }
@@ -31,7 +29,7 @@ arr_braid = []
 //#region MAIN
 window.onload = function () {
     initArrBraid();
-    loadData(RPLAY, RCROSS);
+    loadData();
     createDots();
 };
 //#endregion
@@ -258,24 +256,15 @@ function initArrBraid() {
         }
     }
 }
-function loadData(rPlay, rCross) {
-    for (p=rPlay[0]; p<=rPlay[1]; p++) {
-        for (c=rCross[0]; c<=rCross[1]; c++) {
-            var url = "https://raw.githubusercontent.com/abdulzaf/msc_thesis/main/databraid/p" + p + "_c" + c + ".csv";
-            fetch(url)
-            .then(r => r.text())
-            .then(t => obj_braid = loadFile(t))
-            arr_braid[0][0].push(obj_braid)
-            console.log(arr_braid)
-        }
-    }
+function loadData() {
+    const url = "https://raw.githubusercontent.com/abdulzaf/msc_thesis/main/braid_data.csv"
+    fetch(url)
+        .then(r => r.text())
+        .then(t => loadFile(t))
 }
-function fetchData(url) {
-    return fetch(url).then(res => res.text())
-  }
 function loadFile(file) {
     let obj = arrStr2Num(parseCSV(file));
-    return obj;
+    parseData(obj)
 }
 function parseCSV(str) {
     var arr = [];
@@ -309,6 +298,9 @@ function arrStr2Num(arr) {
         arr[i] = arr[i].map(Number)
     }
     return arr
+}
+function parseData(arr) {
+    console.log(arr)
 }
 //#endregion
 
