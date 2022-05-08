@@ -320,7 +320,6 @@ function generateTraj(braid, X, Y, nCross, nPlay) {
     let playBraid = [];
     let trajY = [];
     playBraid.push(JSON.parse(JSON.stringify(players)))
-    console.log(JSON.stringify(players))
     for (c=0; c<nCross; c++) {
         let p1 = braid[c]-1;
         let p2 = braid[c];
@@ -333,7 +332,7 @@ function generateTraj(braid, X, Y, nCross, nPlay) {
         console.log([p1, p2, JSON.stringify(players)])
         playBraid.push(JSON.parse(JSON.stringify(players)));
     }
-    console.log(playBraid)
+    
     for (p=0; p<nPlay; p++) {
         trajY.push([])
         for (c=0; c<X.length; c++) {
@@ -342,6 +341,7 @@ function generateTraj(braid, X, Y, nCross, nPlay) {
         }
     }
     console.log(trajY)
+    console.log(trajY.reverse())
     
     return [trajX, trajY]
 }
@@ -368,22 +368,12 @@ function interPlayers(PX, PY, timeO, time, nPlay) {
         Object.assign(struct_stim, {[keyName]: [JSON.parse(JSON.stringify(trajX)), JSON.parse(JSON.stringify(trajY))]});
     }
 }
+
 // Generate Ball
 function generateBall(timeO, trajX, trajY, duration, nCross, nPlay) {
-    let timeB = makeArr(0, duration, 1*nCross);
-    let ballSeq = [];
-    ballSeq.push(Math.floor(Math.random()*nPlay));
-    for (t=1; t<timeB.length; t++) {
-        prevB = ballSeq[t-1];
-        nMove = Math.ceil(1 * Math.random());
-        bDir = 2*Math.floor(2 * Math.random()) - 1;
-        if (prevB==nPlay-1) { // move up
-            bDir = -1;
-        } else if (prevB==0) { // move down
-            bDir = +1;
-        }
-        ballSeq.push(prevB + bDir * nMove);
-    }
+    let timeB = makeArr(0, duration, nPlay);
+    let ballSeq = [...Array(nPlay).keys()].sort(() => Math.random() - 0.5);
+    
     let ballX = [];
     let ballY = [];
     for (t=0; t<timeB.length; t++) {
