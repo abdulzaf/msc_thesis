@@ -20,9 +20,9 @@ const NBRAID = 15;
 const COMPLEXITY = 12;
 const TRIALLIST = [...Array(NBRAID).keys()];
 const TRIALORDER = TRIALLIST.sort(() => Math.random() - 0.5);
-var NPLAY = RPLAY[0];
-var NCROSS = RCROSS[0];
-var HVEL = 10; // deg/s
+var NPLAY = RPLAY[1];
+var NCROSS = RCROSS[1];
+var HVEL = 5; // deg/s
 var TARVEL = HVEL; //2 * HVEL / NCROSS ; // deg/s
 var DUR = SPAN / TARVEL; // sec
 var DX = 0.75 * (DIM[0] - 2*BUFFER) / NPLAY;
@@ -139,7 +139,7 @@ function drawTestFrame() {
     }
 }
 function initStim() {
-    if (frameI == 1 * FS) {
+    if (frameI == 3 * FS) {
         clearInterval(IntervalI);
         clearInterval(IntervalP);
         for (i = 0; i < NPLAY; i++) {
@@ -192,6 +192,7 @@ btnPlay.onclick = function () {
     index++;
     trialNo++;
     if (trialNo>NBRAID) {
+        console.log(trialNo)
         trialNo = 1;
         // increase # of crosses
         NCROSS++;
@@ -371,7 +372,7 @@ function interPlayers(PX, PY, timeO, time, nPlay) {
 function generateBall(timeO, trajX, trajY, duration, nCross, nPlay) {
     let timeB = makeArr(0, duration, 1*nCross);
     let ballSeq = [];
-    ballSeq.push(Math.floor(nPlay/2));
+    ballSeq.push(Math.floor(Math.random()*nPlay));
     for (t=1; t<timeB.length; t++) {
         prevB = ballSeq[t-1];
         nMove = Math.ceil(1 * Math.random());
