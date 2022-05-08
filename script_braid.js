@@ -15,9 +15,9 @@ const FS = 250;
 const DT = 1/FS;
 const PCOL = ['#0000ff', '#ff0000', '#00ff00', '#ff00ff', '#00ffff', '#ffff00']
 const RPLAY = [4,6];
-const RCROSS = [3,5];
-const NBRAID = 15;
-const COMPLEXITY = 12;
+const RCROSS = [4,6];
+const NBRAID = 10;
+const COMPLEXITY = 16;
 const TRIALLIST = [...Array(NBRAID).keys()];
 const TRIALORDER = TRIALLIST.sort(() => Math.random() - 0.5);
 var NPLAY = RPLAY[1];
@@ -65,6 +65,8 @@ window.onload = function () {
     loadData();
     createDots();
     createTestDots();
+
+    console.log(arr_braid)
 };
 //#endregion
 
@@ -223,7 +225,7 @@ btnPlay.onclick = function () {
         var traj = generateTraj(braid, XY[0], XY[1], NCROSS, NPLAY);
         var time = generateTime(DT, DUR, NCROSS);
         interPlayers(traj[0], traj[1], time[1], time[0], NPLAY);
-        var ballTXY = generateBall(time[1], traj[0], traj[1], DUR, NCROSS, NPLAY);
+        var ballTXY = generateBall(time[1], traj[0], traj[1], DUR, braid, NPLAY);
         interBall(ballTXY[0], ballTXY[1], ballTXY[2], time[0]);
         console.log(braid);
 
@@ -297,7 +299,6 @@ function generateXY(dim, buffer, nCross, nPlay) {
     let PY = makeArr(0, dim[1]-2*buffer, nPlay);
     PX = PX.map(function(x) { return x + buffer;})
     PY = PY.map(function(y) { return y + buffer;})
-
     return [PX, PY]
 }
 // Create individual player trajectories
@@ -368,11 +369,13 @@ function interPlayers(PX, PY, timeO, time, nPlay) {
         Object.assign(struct_stim, {[keyName]: [JSON.parse(JSON.stringify(trajX)), JSON.parse(JSON.stringify(trajY))]});
     }
 }
-
 // Generate Ball
-function generateBall(timeO, trajX, trajY, duration, nCross, nPlay) {
-    let timeB = makeArr(0, duration, nPlay);
-    let ballSeq = [...Array(nPlay).keys()].sort(() => Math.random() - 0.5);
+function generateBall(timeO, trajX, trajY, duration, braid, nPlay) {
+    let timeB = makeArr(0, duration, braid.length);
+    let ballSeq = [];
+    for (t=0; t<braid.length; t++) {
+        ballSeq.push(nPlay-braid.reverse()[t]);
+    }
     
     let ballX = [];
     let ballY = [];
