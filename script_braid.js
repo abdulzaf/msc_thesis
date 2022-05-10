@@ -21,8 +21,8 @@ const COMPLEXITY = 16;
 const TRIALLIST = [...Array(NBRAID).keys()];
 const TRIALORDER = TRIALLIST.sort(() => Math.random() - 0.5);
 var NPLAY = RPLAY[1];
-var NCROSS = RCROSS[1];
-var HVEL = 5; // deg/s
+var NCROSS = RCROSS[0];
+var HVEL = 3; // deg/s
 var TARVEL = HVEL; //2 * HVEL / NCROSS ; // deg/s
 var DUR = SPAN / TARVEL; // sec
 var DX = 0.75 * (DIM[0] - 2*BUFFER) / NPLAY;
@@ -30,9 +30,6 @@ var frameI = 0;
 var frameP = 0;
 var IntervalI;
 var IntervalP;
-var mousePosition = { 'x': 0, 'y': 0 };
-var distArr = [];
-var mouseArr = [];
 var index = 0;
 var trialNo = 0;
 
@@ -46,20 +43,15 @@ struct_scores = {
     'complexity': [],
     'nplay': [],
     'ncross': [],
-    'ball': [],
     'score': [],
     'selectID': [],
     'testID': [],
-    'stim': [],
-    'mouse': []
+    'stim': []
 }
 arr_braid = []
 //#endregion
 
 //#region MAIN
-$(document).bind('mousemove', function (e) {
-    mousePosition = { 'x': e.pageX - container.offsetLeft, 'y': e.pageY - container.offsetTop };
-});
 window.onload = function () {
     initArrBraid();
     loadData();
@@ -79,11 +71,6 @@ function createDots() {
         div.style.backgroundColor = PCOL[i];
         document.getElementById("main").appendChild(div);
     }
-    // Ball
-    var div = document.createElement("div");
-    div.id = 'ball';
-    div.classList.add('ball');
-    document.getElementById("main").appendChild(div);
 }
 function createTestDots() {
     // Players
@@ -94,32 +81,20 @@ function createTestDots() {
         div.style.backgroundColor = PCOL[i];
         document.getElementById("main").appendChild(div);
     }
-    // Ball
-    var div = document.createElement("div");
-    div.id = 'tball';
-    div.classList.add('tball');
-    document.getElementById("main").appendChild(div);
 }
 function removeDots() {
-    // Ball
-    document.getElementById('ball').remove();
     // Players
     for (i = 0; i < NPLAY; i++) {
         document.getElementById('p' + i).remove();
     }
 }
 function removeTestDots() {
-    // Ball
-    document.getElementById('tball').remove();
     // Players
     for (i = 0; i < NPLAY; i++) {
         document.getElementById('t' + i).remove();
     }
 }
 function drawFrame(t) {
-    eB = document.getElementById('ball');
-    eB.style.left = struct_stim['ball'][0][t] + "px";
-    eB.style.bottom = struct_stim['ball'][1][t] + "px";
     for (i = 0; i < NPLAY; i++) {
         // UPDATE DOTS
         e1 = document.getElementById('p' + i);
@@ -128,9 +103,6 @@ function drawFrame(t) {
     }
 }
 function drawTestFrame() {
-    eB = document.getElementById('tball');
-    eB.style.left = struct_stim['ball'][0][0] + "px";
-    eB.style.bottom = struct_stim['ball'][1][0] + "px";
     for (i = 0; i < NPLAY; i++) {
         // UPDATE DOTS
         e1 = document.getElementById('t' + i);
@@ -157,17 +129,6 @@ function playStim() {
     if (frameP < struct_stim.time.length) {
         drawFrame(frameP)
         frameP++;
-        // Check ball position
-        bX = struct_stim['ball'][0][frameP];
-        bY = DIM[1] - (struct_stim['ball'][1][frameP] + DRAT);
-        // Check mouse position
-        mX = mousePosition.x;
-        mY = mousePosition.y;
-        // Store mouse position;
-        mouseArr.push([mX,mY]);
-        // Get Distance
-        dist = Math.sqrt((bX - mX) * (bX - mX) + (bY - mY) * (bY - mY));
-        distArr.push(dist);
     } else {
         clearInterval(IntervalP);
         // SET TEST
@@ -209,8 +170,6 @@ btnPlay.onclick = function () {
         // RESET SCORES
         frameP = 0;
         frameI = 0;
-        distArr = [];
-        mouseArr = [];
         // REMOVE VISUALS
         removeDots();
         removeTestDots();
@@ -222,8 +181,6 @@ btnPlay.onclick = function () {
         var traj = generateTraj(braid, XY[0], XY[1], NCROSS, NPLAY);
         var time = generateTime(DT, DUR, NCROSS);
         interPlayers(traj[0], traj[1], time[1], time[0], NPLAY);
-        var ballTXY = generateBall(time[1], traj[0], traj[1], DUR, braid, NPLAY);
-        interBall(ballTXY[0], ballTXY[1], ballTXY[2], time[0]);
 
         // START ANIMATION
         clearInterval(IntervalI);
@@ -233,35 +190,15 @@ btnPlay.onclick = function () {
     }
 }
 function testClick(el) {
-    for (i = 0; i < NPLAY; i++) {
+    /*for (i = 0; i < NPLAY; i++) {
         // UPDATE DOTS
-        tEl = document.getElementById('t' + i);
-        tEl.onclick = null;;
-
         pEl = document.getElementById('p' + i);
         pEl.style.backgroundColor = PCOL[i];
     }
     // UPDATE CLICKED DOT
+    el.onclick = null;
     playNo = el.id[1];
     el.classList.add('test-sel');
-
-    // Get closest player to ball
-    let dBall = [];
-    bY = struct_stim['ball'][1][frameP-1];
-    for (i = 0; i < NPLAY; i++) {
-        pY = struct_stim['p'+i][1][frameP-1];
-        dBall.push((pY-bY)*(pY-bY));
-    }
-    testID = dBall.indexOf(Math.min(...dBall));
-
-    // TEST BALL
-    scoreB = 0
-    for (i = 0; i < distArr.length; i++) {
-        //scoreB += distArr[i]
-        if (distArr[i] < 1 * DRAT) {
-            scoreB++;
-        }
-    }
 
     // UPDATE SCORES
     struct_scores.index.push(index);
@@ -269,14 +206,10 @@ function testClick(el) {
     struct_scores.complexity.push(COMPLEXITY);
     struct_scores.nplay.push(JSON.parse(JSON.stringify(NPLAY)));
     struct_scores.ncross.push(JSON.parse(JSON.stringify(NCROSS)));
-    struct_scores.ball.push(Math.round(100 * scoreB / distArr.length));
     struct_scores.score.push(playNo==testID);
     struct_scores.selectID.push(playNo);
     struct_scores.testID.push(testID);
-    struct_scores.stim.push(JSON.parse(JSON.stringify(struct_stim)));
-
-    // UPDATE INTERFACE
-    txtBall.innerHTML = 'BALL: ' + struct_scores.ball[struct_scores.ball.length - 1] + '%';
+    struct_scores.stim.push(JSON.parse(JSON.stringify(struct_stim)));*/
 }
 //#endregion INTERFACE
 
@@ -359,40 +292,6 @@ function interPlayers(PX, PY, timeO, time, nPlay) {
         let keyName = 'p'+p;
         Object.assign(struct_stim, {[keyName]: [JSON.parse(JSON.stringify(trajX)), JSON.parse(JSON.stringify(trajY))]});
     }
-}
-// Generate Ball
-function generateBall(timeO, trajX, trajY, duration, braid, nPlay) {
-    let timeB = makeArr(0, duration, braid.length);
-    let ballSeq = braid.slice(Math.floor(nPlay/2)).concat(braid.slice(0, Math.floor(nPlay/2)));
-    /*for (t=0; t<braid.length; t++) {
-
-        ballSeq.push(braid[t]);
-    }*/
-    
-    console.log(braid)
-    console.log(ballSeq)
-    
-    let ballX = [];
-    let ballY = [];
-    for (t=0; t<timeB.length; t++) {
-        var splineX = new MonotonicCubicSpline(timeO, trajX[ballSeq[t]]);
-        var splineY = new MonotonicCubicSpline(timeO, trajY[ballSeq[t]]);
-        ballX.push(splineX.interpolate(timeB[t]));
-        ballY.push(splineY.interpolate(timeB[t]));
-    }
-    return [timeB, ballX, ballY]
-}
-// Interpolate Ball
-function interBall(timeB, ballX, ballY, time) {
-    let trajX = [];
-    let trajY = [];
-    var splineX = new MonotonicCubicSpline(timeB, ballX);
-    var splineY = new MonotonicCubicSpline(timeB, ballY);
-    for (t=0; t<time.length; t++) {
-        trajX.push(splineX.interpolate(time[t]) + DRAT);
-        trajY.push(splineY.interpolate(time[t]));
-    }
-    Object.assign(struct_stim, {ball: [JSON.parse(JSON.stringify(trajX)), JSON.parse(JSON.stringify(trajY))]});
 }
 
 //#endregion
