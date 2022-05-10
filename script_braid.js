@@ -65,8 +65,6 @@ window.onload = function () {
     loadData();
     createDots();
     createTestDots();
-
-    console.log(arr_braid)
 };
 //#endregion
 
@@ -194,7 +192,6 @@ btnPlay.onclick = function () {
     index++;
     trialNo++;
     if (trialNo>NBRAID) {
-        console.log(trialNo)
         trialNo = 1;
         // increase # of crosses
         NCROSS++;
@@ -227,7 +224,6 @@ btnPlay.onclick = function () {
         interPlayers(traj[0], traj[1], time[1], time[0], NPLAY);
         var ballTXY = generateBall(time[1], traj[0], traj[1], DUR, braid, NPLAY);
         interBall(ballTXY[0], ballTXY[1], ballTXY[2], time[0]);
-        console.log(braid);
 
         // START ANIMATION
         clearInterval(IntervalI);
@@ -324,13 +320,10 @@ function generateTraj(braid, X, Y, nCross, nPlay) {
     for (c=0; c<nCross; c++) {
         let p1 = braid[c]-1;
         let p2 = braid[c];
-        console.log(p1)
-        console.log(p2)
         let temp1 = JSON.parse(JSON.stringify(players[p1]));
         let temp2 = JSON.parse(JSON.stringify(players[p2]));
         players[p1] = temp2;
         players[p2] = temp1;
-        console.log([p1, p2, JSON.stringify(players)])
         playBraid.push(JSON.parse(JSON.stringify(players)));
     }
     
@@ -341,8 +334,6 @@ function generateTraj(braid, X, Y, nCross, nPlay) {
             trajY[p].push(JSON.parse(JSON.stringify(Y[yID])));
         }
     }
-    console.log(trajY)
-    console.log(trajY.reverse())
     
     return [trajX, trajY]
 }
@@ -372,10 +363,14 @@ function interPlayers(PX, PY, timeO, time, nPlay) {
 // Generate Ball
 function generateBall(timeO, trajX, trajY, duration, braid, nPlay) {
     let timeB = makeArr(0, duration, braid.length);
-    let ballSeq = [];
-    for (t=0; t<braid.length; t++) {
-        ballSeq.push(nPlay-braid.reverse()[t]);
-    }
+    let ballSeq = braid.slice(Math.floor(nPlay/2)).concat(braid.slice(0, Math.floor(nPlay/2)));
+    /*for (t=0; t<braid.length; t++) {
+
+        ballSeq.push(braid[t]);
+    }*/
+    
+    console.log(braid)
+    console.log(ballSeq)
     
     let ballX = [];
     let ballY = [];
@@ -385,7 +380,6 @@ function generateBall(timeO, trajX, trajY, duration, braid, nPlay) {
         ballX.push(splineX.interpolate(timeB[t]));
         ballY.push(splineY.interpolate(timeB[t]));
     }
-    console.log([ballX, ballY])
     return [timeB, ballX, ballY]
 }
 // Interpolate Ball
@@ -474,7 +468,6 @@ function parseData(arr) {
             }
         }
     }
-    console.log(arr_braid)
 }
 //#endregion
 
@@ -484,7 +477,6 @@ btnSave.onclick = function () {
     var timeElapsed = Date.now();
     var today = new Date(timeElapsed);
     var fileName = today.toUTCString().replace(',', '').replace(':', '_').replace(':', '_') + '_SCORES.txt';
-    console.log(fileName)
     saveAs(blob, fileName);
 }
 //#endregion
