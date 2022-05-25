@@ -117,7 +117,7 @@ function initStim() {
         for (i = 0; i < NPLAY; i++) {
             // UPDATE DOTS
             e1 = document.getElementById('p' + i);
-            e1.style.backgroundColor = 'black';
+            //e1.style.backgroundColor = 'black';
         }
         IntervalP = setInterval(playStim, Math.round(1000 / FS));
     } else {
@@ -141,7 +141,7 @@ function playStim() {
         for (i = 0; i < NPLAY; i++) {
             el = document.getElementById('t' + i);
             el.onclick = function () {
-                testClick(this);
+                testClickTest(this);
             }
         };
     }
@@ -189,27 +189,31 @@ btnPlay.onclick = function () {
         alert('DONE')
     }
 }
-function testClick(el) {
-    /*for (i = 0; i < NPLAY; i++) {
-        // UPDATE DOTS
-        pEl = document.getElementById('p' + i);
-        pEl.style.backgroundColor = PCOL[i];
-    }
-    // UPDATE CLICKED DOT
-    el.onclick = null;
+function testClickTest(el) {
     playNo = el.id[1];
-    el.classList.add('test-sel');
-
-    // UPDATE SCORES
-    struct_scores.index.push(index);
-    struct_scores.trial.push(trialNo);
-    struct_scores.complexity.push(COMPLEXITY);
-    struct_scores.nplay.push(JSON.parse(JSON.stringify(NPLAY)));
-    struct_scores.ncross.push(JSON.parse(JSON.stringify(NCROSS)));
-    struct_scores.score.push(playNo==testID);
-    struct_scores.selectID.push(playNo);
-    struct_scores.testID.push(testID);
-    struct_scores.stim.push(JSON.parse(JSON.stringify(struct_stim)));*/
+    console.log(playNo)
+    // REMOVE CLICK FOR TESTS + SET CLICK FOR PLAYERS
+    for (i = 0; i < NPLAY; i++) {
+        elT = document.getElementById('t' + i);
+        elT.onclick = null;
+        el = document.getElementById('p' + i);
+        el.onclick = function () {
+            testClickPlay(this);
+        }
+    };
+}
+function testClickPlay(el) {
+    playNo = el.id[1];
+    console.log(playNo)
+    // REMOVE CLICK FOR TESTS + SET CLICK FOR PLAYERS
+    for (i = 0; i < NPLAY; i++) {
+        elP = document.getElementById('p' + i);
+        elP.onclick = null;
+        el = document.getElementById('t' + i);
+        el.onclick = function () {
+            testClickTest(this);
+        }
+    };
 }
 //#endregion INTERFACE
 
