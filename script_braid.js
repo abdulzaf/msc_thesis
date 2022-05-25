@@ -14,16 +14,15 @@ const SPAN = DIM[0] / DRAT; // deg
 const FS = 250;
 const DT = 1/FS;
 const PCOL = ['#0000ff', '#ff0000', '#00ff00', '#ff00ff', '#00ffff', '#ffff00']
-const RPLAY = [4,6];
-const RCROSS = [4,6];
-const NBRAID = 10;
-const COMPLEXITY = 16;
-const TRIALLIST = [...Array(NBRAID).keys()];
+const NPLAY = 6;
+const NCROSS = 12;
+const NBRAID = 20;
+const LVLGROUP = ['Lo', 'Hi'];
+const LVLPLAY = ['Lo', 'Mix', 'Hi'];
+const TRIALLIST = [...Array(NBRAID*LVLGROUP.length*LVLPLAY.length).keys()];
 const TRIALORDER = TRIALLIST.sort(() => Math.random() - 0.5);
-var NPLAY = RPLAY[1];
-var NCROSS = RCROSS[0];
-var HVEL = 3; // deg/s
-var TARVEL = HVEL; //2 * HVEL / NCROSS ; // deg/s
+var CONDLIST = [];
+var TARVEL = 3; // deg/s
 var DUR = SPAN / TARVEL; // sec
 var DX = 0.75 * (DIM[0] - 2*BUFFER) / NPLAY;
 var frameI = 0;
@@ -34,26 +33,24 @@ var index = 0;
 var trialNo = 0;
 
 struct_stim = {
-    'braid': [],
-    'braidNo': []
+    'lvl_group': [],
+    'id_play': [],
+    'braid': []
 }
 struct_scores = {
-    'index': [],
     'trial': [],
-    'complexity': [],
-    'nplay': [],
-    'ncross': [],
+    'lvl_group': [],
+    'lvl_play': [],
     'score': [],
     'selectID': [],
     'testID': [],
-    'stim': []
+    'braid': []
 }
-arr_braid = []
 //#endregion
 
 //#region MAIN
 window.onload = function () {
-    initArrBraid();
+    initConditions();
     loadData();
     createDots();
     createTestDots();
@@ -152,20 +149,8 @@ function playStim() {
 btnPlay.onclick = function () {
     index++;
     trialNo++;
-    if (trialNo>NBRAID) {
-        trialNo = 1;
-        // increase # of crosses
-        NCROSS++;
-        if (NCROSS>RCROSS[1]) {
-            NCROSS = RCROSS[0];
-            NPLAY++;
-        }
-    }
-    if (NPLAY<=RPLAY[1]) {
+    if (trialNo<=TRIALLIST.length) {
         // UPDATE LABELS
-        txtIndex.innerHTML = 'INDEX: ' + index;
-        txtPlayer.innerHTML = 'PLAYERS: ' + NPLAY;
-        txtSwitch.innerHTML = 'SWITCHES: ' + NCROSS;
         txtTrial.innerHTML = 'TRIAL: ' + trialNo;
         // RESET SCORES
         frameP = 0;
@@ -219,11 +204,13 @@ function testClickPlay(el) {
 
 //#region STIMULUS FUNCTIONS
 // Create a braid on nPlay strands with nCross crossings
-function generateBraid(nPlay, nCross) {
-    bNo = TRIALORDER[trialNo];//Math.floor(Math.random() * NBRAID);
-    braid = arr_braid[nPlay-1][nCross-1][0][bNo];
-    struct_stim.braid = braid;
-    struct_stim.braidNo = bNo;
+function generateBraid() {
+    bNo = CONDLIST[TRIALORDER[trialNo]][0];
+    pLvl = CONDLIST[TRIALORDER[trialNo]][1];
+    braid = struct_stim.braid[bNo];
+    pID = struct_stim.id_play[bNo][pLvl];
+    gLvl = struct_stim.lvl_group[bNo];
+    console.log([braid, gLvl, pID])
     return braid
 }
 // Create XY trajectory points based on field dimensions and buffer space
@@ -301,11 +288,10 @@ function interPlayers(PX, PY, timeO, time, nPlay) {
 //#endregion
 
 //#region LOAD DATA
-function initArrBraid() {
-    for (p=0; p<RPLAY[1]; p++) {
-        arr_braid.push([]);
-        for (c=0; c<RCROSS[1]; c++) {
-            arr_braid[p].push([]);
+function initConditions() {
+    for (i=0; i<NBRAID*LVLGROUP.length; i++) {
+        for (j=0; j<LVLPLAY.length; j++) {
+            CONDLIST.push([i, j])
         }
     }
 }
@@ -353,23 +339,17 @@ function arrStr2Num(arr) {
     return arr
 }
 function parseData(arr) {
-    var pNo = RPLAY[0];
-    var cNo = RCROSS[0];
-    var bGroup = [];
     for (r=0; r<arr.length; r++) {
-        if (isNaN(arr[r][0])) {
-            bGroup = [];
-            for (b=0; b<NBRAID; b++) {
-                bGroup.push(JSON.parse(JSON.stringify(arr[r+b+1].slice(0, cNo))))
-            }
-            arr_braid[pNo-1][cNo-1].push(JSON.parse(JSON.stringify(bGroup)))
-
-            cNo++;
-            if (cNo>RCROSS[1]) {
-                cNo = RCROSS[0];
-                pNo++;
-            }
-        }
+        let lvl = arr[r][1];
+        let braid = arr[r].slice(2, 2+NCROSS);
+        let pID = [
+            [arr[r][14], arr[r][15]],
+            [arr[r][16], arr[r][17]],
+            [arr[r][18], arr[r][19]],
+        ];
+        struct_stim.lvl_group.push(lvl);
+        struct_stim.id_play.push(pID);
+        struct_stim.braid.push(braid);
     }
 }
 //#endregion
