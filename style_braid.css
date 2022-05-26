@@ -18,12 +18,27 @@ body {
 .player {
     width: 40px;
     height: 40px;
+    font-size: 30px;
+    text-align: center;
+    align-items: center;
+    color: white;
+    background-color: black;
     border-radius: 50%;
     border-color: black;
     border-style: solid;
     border-width: 2px;
     position: absolute;
     transform: translate(-50%, -50%);
+}
+
+.track {
+    color: black;
+    background-color: white;
+}
+
+.move {
+    color: black;
+    background-color: black;
 }
 
 .ball {
@@ -39,7 +54,19 @@ body {
 }
 
 .test-sel {
-    border-color: white;
+    border-color: yellow;
     border-style: solid;
-    border-width: 8px;
+    border-width: 2px;
+}
+
+.test-cor {
+    border-color: greenyellow;
+    border-style: solid;
+    border-width: 2px;
+}
+
+.test-inc {
+    border-color: red;
+    border-style: solid;
+    border-width: 2px;
 }

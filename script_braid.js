@@ -2,11 +2,8 @@
 const container = document.getElementById('main');
 const btnPlay = document.getElementById('btn-play');
 const btnSave = document.getElementById('btn-save');
-const txtIndex = document.getElementById('txt-index');
-const txtPlayer = document.getElementById('txt-players');
-const txtSwitch = document.getElementById('txt-switches');
 const txtTrial = document.getElementById('txt-trial');
-const txtBall = document.getElementById('score-ball');
+const txtScore = document.getElementById('score-play');
 const DIM = [1024, 682];
 const BUFFER = 200;
 const DRAT = 40; // px/deg
@@ -17,12 +14,13 @@ const PCOL = ['#0000ff', '#ff0000', '#00ff00', '#ff00ff', '#00ffff', '#ffff00']
 const NPLAY = 6;
 const NCROSS = 12;
 const NBRAID = 20;
+const NTRACK = 2;
 const LVLGROUP = ['Lo', 'Hi'];
 const LVLPLAY = ['Lo', 'Mix', 'Hi'];
-const TRIALLIST = [...Array(NBRAID*LVLGROUP.length*LVLPLAY.length).keys()];
-const TRIALORDER = TRIALLIST.sort(() => Math.random() - 0.5);
+const TRIALLIST = [...Array(NBRAID*LVLGROUP.length*LVLPLAY.length).keys()].reverse();
+const TRIALORDER = TRIALLIST;//TRIALLIST.sort(() => Math.random() - 0.5);
 var CONDLIST = [];
-var TARVEL = 3; // deg/s
+var TARVEL = 4; // deg/s
 var DUR = SPAN / TARVEL; // sec
 var DX = 0.75 * (DIM[0] - 2*BUFFER) / NPLAY;
 var frameI = 0;
@@ -42,6 +40,7 @@ struct_scores = {
     'lvl_group': [],
     'lvl_play': [],
     'score': [],
+    'trackID': [],
     'selectID': [],
     'testID': [],
     'braid': []
@@ -65,7 +64,8 @@ function createDots() {
         var div = document.createElement("div");
         div.id = 'p' + i;
         div.classList.add('player');
-        div.style.backgroundColor = PCOL[i];
+        div.innerHTML = i+1;
+        //div.style.backgroundColor = PCOL[i];
         document.getElementById("main").appendChild(div);
     }
 }
@@ -75,7 +75,8 @@ function createTestDots() {
         var div = document.createElement("div");
         div.id = 't' + i;
         div.classList.add('player');
-        div.style.backgroundColor = PCOL[i];
+        div.innerHTML = i+1;
+        //div.style.backgroundColor = PCOL[i];
         document.getElementById("main").appendChild(div);
     }
 }
@@ -113,11 +114,19 @@ function initStim() {
         clearInterval(IntervalP);
         for (i = 0; i < NPLAY; i++) {
             // UPDATE DOTS
-            e1 = document.getElementById('p' + i);
-            //e1.style.backgroundColor = 'black';
+            el = document.getElementById('p' + i);
+            el.classList.remove('track');
+            el.classList.add('move');
         }
         IntervalP = setInterval(playStim, Math.round(1000 / FS));
     } else {
+        // GET PLAYERS TO TRACK
+        pID = struct_scores.trackID[struct_scores.trackID.length-1];
+        for (i = 0; i < NTRACK; i++) {
+            // UPDATE DOTS
+            el = document.getElementById('p' + (pID[i]-1));
+            el.classList.add('track');
+        }
         drawFrame(0)
         frameI++;
     }
@@ -131,12 +140,15 @@ function playStim() {
         // SET TEST
         createTestDots();
         drawTestFrame();
+        pID = struct_scores.trackID[struct_scores.trackID.length-1];
+        for (i = 0; i < NTRACK; i++) {
+            // UPDATE DOTS
+            el = document.getElementById('t' + (pID[i]-1));
+            el.classList.add('track');
+        }
         // SET TEST CLICK
-        /*container.onclick = function (e) {
-            testClick();
-        };*/
-        for (i = 0; i < NPLAY; i++) {
-            el = document.getElementById('t' + i);
+        for (i = 0; i < NTRACK; i++) {
+            el = document.getElementById('t' + (pID[i]-1));
             el.onclick = function () {
                 testClickTest(this);
             }
@@ -152,6 +164,7 @@ btnPlay.onclick = function () {
     if (trialNo<=TRIALLIST.length) {
         // UPDATE LABELS
         txtTrial.innerHTML = 'TRIAL: ' + trialNo;
+        txtScore.innerHTML = 'SCORE: __';
         // RESET SCORES
         frameP = 0;
         frameI = 0;
@@ -160,6 +173,13 @@ btnPlay.onclick = function () {
         removeTestDots();
         // CREATE VISUALS
         createDots();
+        // INIT SCORE STRUCT FOR TRIAL
+        bNo = CONDLIST[TRIALORDER[trialNo]][0];
+        pLvl = CONDLIST[TRIALORDER[trialNo]][1];
+        pID = struct_stim.id_play[bNo][pLvl];
+        struct_scores.trackID.push(pID);
+        struct_scores.testID.push([])
+        struct_scores.selectID.push([])
         // GENERATE TRIAL
         var braid = generateBraid(NPLAY, NCROSS);
         var XY = generateXY(DIM, BUFFER, NCROSS, NPLAY);
@@ -176,7 +196,10 @@ btnPlay.onclick = function () {
 }
 function testClickTest(el) {
     playNo = el.id[1];
+    el.classList.add('test-sel');
     console.log(playNo)
+    // STORE CLICK
+    struct_scores.testID[struct_scores.testID.length-1].push(playNo);
     // REMOVE CLICK FOR TESTS + SET CLICK FOR PLAYERS
     for (i = 0; i < NPLAY; i++) {
         elT = document.getElementById('t' + i);
@@ -189,16 +212,58 @@ function testClickTest(el) {
 }
 function testClickPlay(el) {
     playNo = el.id[1];
+    el.classList.add('test-sel');
     console.log(playNo)
-    // REMOVE CLICK FOR TESTS + SET CLICK FOR PLAYERS
+    // STORE CLICK
+    struct_scores.selectID[struct_scores.selectID.length-1].push(playNo);
+    // REMOVE CLICK FOR PLAYERS
     for (i = 0; i < NPLAY; i++) {
         elP = document.getElementById('p' + i);
         elP.onclick = null;
-        el = document.getElementById('t' + i);
-        el.onclick = function () {
-            testClickTest(this);
-        }
     };
+    // CHECK IF TEST PHASE IS COMPLETE
+    if (struct_scores.selectID[struct_scores.selectID.length-1].length==NTRACK) {
+        for (i = 0; i < NPLAY; i++) {
+            // UPDATE DOTS
+            el = document.getElementById('p' + i);
+            el.classList.remove('track');
+            el.classList.remove('move');
+        }
+        // UPDATE SCORES
+        let score = getScore();
+        let bNo = CONDLIST[TRIALORDER[trialNo]][0];
+        struct_scores.trial.push(trialNo);
+        struct_scores.lvl_group.push(struct_stim.lvl_group[bNo]);
+        struct_scores.lvl_play.push(CONDLIST[TRIALORDER[trialNo]][1]);
+        struct_scores.score.push(score);
+        struct_scores.braid.push(struct_stim.braid[bNo]);
+        // UPDATE UI
+        txtScore.innerHTML = 'SCORE: ' + score;
+    } else {
+        // SET CLICK FOR TESTS
+        pID = struct_scores.trackID[struct_scores.trackID.length-1];
+        for (i = 0; i < NTRACK; i++) {
+            el = document.getElementById('t' + (pID[i]-1));
+            el.onclick = function () {
+                testClickTest(this);
+            }
+        };
+    }
+}
+function getScore() {
+    idTest = struct_scores.testID[struct_scores.testID.length-1];
+    idSel = struct_scores.selectID[struct_scores.selectID.length-1];
+    let scoreI = 0;
+    for (i=0; i<NTRACK; i++) {
+        el = document.getElementById('p' + idSel[i]);
+        if (idTest[i]==idSel[i]) {
+            score++;
+            el.classList.add('test-cor');
+        } else {
+            el.classList.add('test-inc');
+        }
+    }
+    return score
 }
 //#endregion INTERFACE
 
@@ -230,7 +295,7 @@ function generateTraj(braid, X, Y, nCross, nPlay) {
         // Randomize X Positions
         XC = JSON.parse(JSON.stringify(X));
         for (c=1; c<XC.length-1; c++) {
-            let xADJ = (0.5 - Math.random())*DX;
+            let xADJ = (0.5 - Math.random())*DX/2;
             XC[c] += xADJ;
             trajX[p].push(XC[c]);
         }
