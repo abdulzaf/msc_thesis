@@ -39,7 +39,8 @@ struct_scores = {
     'trial': [],
     'lvl_group': [],
     'lvl_play': [],
-    'score': [],
+    'scoreID': [],
+    'scoreOBJ': [],
     'trackID': [],
     'selectID': [],
     'testID': [],
@@ -64,7 +65,6 @@ function createDots() {
         var div = document.createElement("div");
         div.id = 'p' + i;
         div.classList.add('player');
-        div.innerHTML = i+1;
         //div.style.backgroundColor = PCOL[i];
         document.getElementById("main").appendChild(div);
     }
@@ -75,7 +75,6 @@ function createTestDots() {
         var div = document.createElement("div");
         div.id = 't' + i;
         div.classList.add('player');
-        div.innerHTML = i+1;
         //div.style.backgroundColor = PCOL[i];
         document.getElementById("main").appendChild(div);
     }
@@ -126,6 +125,7 @@ function initStim() {
             // UPDATE DOTS
             el = document.getElementById('p' + (pID[i]-1));
             el.classList.add('track');
+            el.innerHTML = i+1;
         }
         drawFrame(0)
         frameI++;
@@ -235,7 +235,8 @@ function testClickPlay(el) {
         struct_scores.trial.push(trialNo);
         struct_scores.lvl_group.push(struct_stim.lvl_group[bNo]);
         struct_scores.lvl_play.push(CONDLIST[TRIALORDER[trialNo]][1]);
-        struct_scores.score.push(score);
+        struct_scores.scoreID.push(score[0]);
+        struct_scores.scoreOBJ.push(score[1]);
         struct_scores.braid.push(struct_stim.braid[bNo]);
         // UPDATE UI
         txtScore.innerHTML = 'SCORE: ' + score;
@@ -253,17 +254,27 @@ function testClickPlay(el) {
 function getScore() {
     idTest = struct_scores.testID[struct_scores.testID.length-1];
     idSel = struct_scores.selectID[struct_scores.selectID.length-1];
+    objTest = JSON.parse(JSON.stringify(idTest)).sort();
+    objSel = JSON.parse(JSON.stringify(idSel)).sort();
+    console.log(idTest)
+    console.log(objTest)
     let scoreI = 0;
+    let scoreO = 0;
     for (i=0; i<NTRACK; i++) {
         el = document.getElementById('p' + idSel[i]);
+        // TEST MIT
         if (idTest[i]==idSel[i]) {
-            score++;
+            scoreI++;
             el.classList.add('test-cor');
         } else {
             el.classList.add('test-inc');
         }
+        // TEST MOT
+        if (objTest[i]==objSel[i]) {
+            scoreO++;
+        }
     }
-    return score
+    return scoreI
 }
 //#endregion INTERFACE
 
