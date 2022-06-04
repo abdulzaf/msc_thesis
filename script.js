@@ -17,29 +17,47 @@ const LVLGROUP = ['Lo', 'Hi'];
 const TRIALLIST = [...Array(NBRAID*LVLGROUP.length).keys()];
 const TRIALORDER = TRIALLIST.sort(() => Math.random() - 0.5);
 
-struct_stim = {
-    'lvl_group': [],
-    'id_play': [],
-    'braid': []
+struct_data = {
+    'level': [],
+    'xy_play': [],
+    'xy_ball': []
 }
 //#endregion
 
 //#region MAIN
 window.onload = function () {
+    initStruct();
     loadData();
+    console.log(struct_data)
 };
 //#endregion
 
 //#region LOAD DATA
-function loadData() {
-    const url = "https://raw.githubusercontent.com/abdulzaf/msc_thesis/main/data_ball.csv"
-    fetch(url)
-        .then(r => r.text())
-        .then(t => loadFile(t))
+function initStruct() {
+    for (i=0; i<TRIALLIST.length; i++) {
+        struct_data.level.push(0)
+        struct_data.xy_ball.push([[],[]])
+        struct_data.xy_play.push([[[],[]],[[],[]],[[],[]]])
+    }
 }
-function loadFile(file) {
+
+function loadData() {
+    const urlPlay = "https://raw.githubusercontent.com/abdulzaf/msc_thesis/main/data_play.csv"
+    const urlBall = "https://raw.githubusercontent.com/abdulzaf/msc_thesis/main/data_ball.csv"
+    fetch(urlPlay)
+        .then(r => r.text())
+        .then(t => loadPlayFile(t))
+    fetch(urlBall)
+        .then(r => r.text())
+        .then(t => loadBallFile(t))
+}
+function loadPlayFile(file) {
     let obj = arrStr2Num(parseCSV(file));
-    parseData(obj)
+    parsePlayData(obj)
+}
+function loadBallFile(file) {
+    let obj = arrStr2Num(parseCSV(file));
+    parseBallData(obj)
 }
 function parseCSV(str) {
     var arr = [];
@@ -74,18 +92,23 @@ function arrStr2Num(arr) {
     }
     return arr
 }
-function parseData(arr) {
+function parsePlayData(arr) {
     for (r=0; r<arr.length; r++) {
-        let lvl = arr[r][1];
-        let braid = arr[r].slice(2, 2+NCROSS);
-        let pID = [
-            [arr[r][14], arr[r][15]],
-            [arr[r][16], arr[r][17]],
-            [arr[r][18], arr[r][19]],
-        ];
-        struct_stim.lvl_group.push(lvl);
-        struct_stim.id_play.push(pID);
-        struct_stim.braid.push(braid);
+        let tNo = arr[r][1];
+        let lvl = arr[r][2];
+        let pNo = arr[r][3];
+        let dim = arr[r][4];
+        let coord = arr[r].slice(5);
+        struct_data.level[tNo-1] = lvl;
+        struct_data.xy_play[tNo-1][pNo][dim] = coord;
+    }
+}
+function parseBallData(arr) {
+    for (r=0; r<arr.length; r++) {
+        let tNo = arr[r][1];
+        let dim = arr[r][4];
+        let coord = arr[r].slice(5);
+        struct_data.xy_ball[tNo-1][dim] = coord;
     }
 }
 //#endregion
