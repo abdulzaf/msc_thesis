@@ -6,6 +6,7 @@ const txtTrial = document.getElementById('txt-trial');
 const txtScore = document.getElementById('score-play');
 const DIM = [1400, 932];
 const BUFFER = [200, 200];
+const VSCALE = 0.5;
 const DRAT = 40; // px/deg
 const SPAN = DIM[0] / DRAT; // deg
 const FS = 250;
@@ -15,12 +16,26 @@ const NCROSS = 8;
 const NBRAID = 10;
 const LVLGROUP = ['Lo', 'Hi'];
 const TRIALLIST = [...Array(NBRAID*LVLGROUP.length).keys()];
-const TRIALORDER = TRIALLIST.sort(() => Math.random() - 0.5);
+const TRIALORDER = TRIALLIST.reverse(); //TRIALLIST.sort(() => Math.random() - 0.5);
+var trialNo = 0;
+var frameInit = 0;
+var framePlay = 0;
+var IntervalInit;
+var IntervalPlay;
 
 struct_data = {
     'level': [],
     'xy_play': [],
     'xy_ball': []
+}
+struct_scores = {
+    'trial': [],
+    'pattern': [],
+    'level': [],
+    'scoreID': [],
+    'scoreBall': [],
+    'targetSel': [],
+    'mouseXY': []
 }
 //#endregion
 
@@ -28,16 +43,109 @@ struct_data = {
 window.onload = function () {
     initStruct();
     loadData();
+    createDots();
     console.log(struct_data)
 };
+//#endregion
+
+//#region DRAW FUNCTIONS
+// Create/Remove Dots
+function createDots() {
+    // Ball
+    var div = document.createElement("div");
+    div.id = 'ball';
+    div.classList.add('player', 'ball')
+    document.getElementById("main").appendChild(div);
+    // Players
+    for (i = 0; i < NPLAY; i++) {
+        var div = document.createElement("div");
+        div.id = 'p' + i;
+        div.classList.add('player');
+        //div.style.backgroundColor = PCOL[i];
+        document.getElementById("main").appendChild(div);
+    }
+}
+function removeDots() {
+    // Ball
+    document.getElementById("ball").remove();
+    // Players
+    for (i = 0; i < NPLAY; i++) {
+        document.getElementById('p' + i).remove();
+    }
+}
+function drawFrame(t) {
+    // Ball
+    el = document.getElementById('ball');
+    el.style.left = struct_data.xy_ball[TRIALORDER[trialNo]][0][t] + 1.5*DRAT + "px";
+    el.style.bottom = pxlAdjust(struct_data.xy_ball[TRIALORDER[trialNo]][1][t]) + "px";
+    for (i = 0; i < NPLAY; i++) {
+        // Players
+        el = document.getElementById('p' + i);
+        el.style.left = struct_data.xy_play[TRIALORDER[trialNo]][i][0][t] + "px";
+        el.style.bottom = pxlAdjust(struct_data.xy_play[TRIALORDER[trialNo]][i][1][t]) + "px";
+    }
+}
+function pxlAdjust(y) {
+    yA = Math.round((VSCALE*(y-DIM[1]/2)) + DIM[1]/2);
+    return yA
+}
+function initStim() {
+    if (frameInit == 1 * FS) {
+        clearInterval(IntervalInit);
+        clearInterval(IntervalPlay);
+        IntervalPlay = setInterval(playStim, Math.round(1000 / FS));
+    } else {
+        drawFrame(0);
+        frameInit++;
+    }
+}
+function playStim() {
+    if (framePlay < struct_data.xy_ball[0][0].length) {
+        drawFrame(framePlay)
+        framePlay++;
+    } else {
+        clearInterval(IntervalPlay);
+    }
+}
+//#endregion
+
+//#region INTERFACE
+btnPlay.onclick = function () {
+    trialNo++;
+    if (trialNo<TRIALLIST.length) {
+        // UPDATE LABELS
+        txtTrial.innerHTML = 'TRIAL: ' + (trialNo+1);
+        // RESET ANIMATIONS
+        frameInit = 0;
+        framePlay = 0;
+        // REMOVE VISUALS
+        removeDots();
+        // CREATE VISUALS
+        createDots();
+        // START ANIMATION
+        clearInterval(IntervalInit);
+        IntervalInit = setInterval(initStim, 1000 / FS);
+    } else {
+        alert('DONE')
+    }
+}
 //#endregion
 
 //#region LOAD DATA
 function initStruct() {
     for (i=0; i<TRIALLIST.length; i++) {
-        struct_data.level.push(0)
-        struct_data.xy_ball.push([[],[]])
-        struct_data.xy_play.push([[[],[]],[[],[]],[[],[]]])
+        // DATA
+        struct_data.level.push(0);
+        struct_data.xy_ball.push([[],[]]);
+        struct_data.xy_play.push([[[],[]],[[],[]],[[],[]]]);
+        // SCORES
+        struct_scores.trial.push(i);
+        struct_scores.pattern.push(TRIALORDER[i]);
+        struct_scores.level.push(0);
+        struct_scores.scoreID.push(0);
+        struct_scores.scoreBall.push(0);
+        struct_scores.targetSel.push([0,0,0]);
+        struct_scores.mouseXY.push([]);
     }
 }
 
