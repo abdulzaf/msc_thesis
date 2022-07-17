@@ -2,7 +2,7 @@ const container = document.getElementById('main');
 const btnPlay = document.getElementById('btn-play');
 const FS = 250;
 const NPLAY = 3;
-const NBALL = 10;
+const NBALL = 8;
 const BRAD = 60;
 const PRAD = 250;
 const PRANGE = 0;
@@ -99,6 +99,8 @@ function initStim() {
         for (i = 0; i < NBALL; i++) {
             let el = document.getElementById('b' + i);
             el.classList.remove('hidden');
+            // SET TEST CLICK
+            el.onclick = function () {testConverge(this)};
         }
         clearInterval(Interval);
     }
@@ -112,9 +114,17 @@ btnPlay.onclick = function () {
     createDots();
     initDots();
     tAnim = 0;
-    tView = 300;
+    tView = 100;
     // START ANIMATION
     clearInterval(Interval);
     Interval = setInterval(initStim, 10000 / FS);
+}
+//#endregion
+
+//#region TEST
+function testConverge(el) {
+    testNo = el.id[1];
+    console.log(testNo)
+    //el.classList.add('test-sel');
 }
 //#endregion

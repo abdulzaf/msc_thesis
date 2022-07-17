@@ -57,3 +57,15 @@ body {
 .hidden {
     visibility: hidden;
 }
+
+.test-cor {
+    border-color: greenyellow;
+    border-style: solid;
+    border-width: 2px;
+}
+
+.test-inc {
+    border-color: red;
+    border-style: solid;
+    border-width: 2px;
+}
