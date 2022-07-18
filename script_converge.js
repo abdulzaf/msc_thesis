@@ -114,7 +114,7 @@ btnPlay.onclick = function () {
     createDots();
     initDots();
     tAnim = 0;
-    tView = 100;
+    tView = 400;
     // START ANIMATION
     clearInterval(Interval);
     Interval = setInterval(initStim, 10000 / FS);
@@ -125,6 +125,10 @@ btnPlay.onclick = function () {
 function testConverge(el) {
     testNo = el.id[1];
     console.log(testNo)
-    //el.classList.add('test-sel');
+    if (testNo==ballNo) {
+        el.classList.add('test-cor');
+    } else {
+        el.classList.add('test-inc');
+    }
 }
 //#endregion
