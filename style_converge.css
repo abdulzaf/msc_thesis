@@ -9,52 +9,35 @@ body {
 #main {
     width: 1024px;
     height: 682px;
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    background-image: url('Field.png');
+    background-color: black;
     position: absolute;
 }
 
-.player {
+.object {
     width: 20px;
     height: 20px;
     font-size: 10px;
     text-align: center;
     align-items: center;
-    color: white;
-    background-color: black;
-    border-radius: 50%;
-    border-color: black;
-    border-style: solid;
-    border-width: 2px;
+    background-color: white;
     position: absolute;
     transform: translate(-50%, -50%);
+}
+
+.player {
+    font-size: 10px;
+    text-align: center;
+    align-items: center;
+    color: white;
+    border-radius: 50%;
+}
+
+.prep {
+    background-color: yellow;
 }
 
 .track {
-    color: black;
-    background-color: white;
-}
-
-.move {
-    color: black;
-    background-color: black;
-}
-
-.ball {
-    background-color: white;
-    border-radius: 50%;
-    border-color: black;
-    border-style: solid;
-    border-width: 2px;
-    width: 20px;
-    height: 20px;
-    position: absolute;
-    transform: translate(-50%, -50%);
-    visibility: visible;
-}
-
-.hidden {
+    background-color: red;
 }
 
 .test-cor {
