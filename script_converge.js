@@ -1,28 +1,39 @@
 const container = document.getElementById('main');
 const btnPlay = document.getElementById('btn-play');
 const btnSave = document.getElementById('btn-save');
+const txtCond = document.getElementById('condition');
 const FS = 250;
 const NPLAY = 2;
 const NBALL = 1;
 const DIM = [1024, 682];
 const AREA = 600;
 const PRAD = 300;
+const PRANGE = 50;
 const DEGRAT = 40; // pxl/deg
-const ANGLES = [1 * Math.PI / 4, 2 * Math.PI / 4, 3 * Math.PI / 4, 4 * Math.PI / 4]
-const VIEWCOND = ['FREE', 'FIX', 'OVERT', 'COVERT'];
-const VIEWTIME = [250, 500, 750]; // milliseconds
-const PREPTIME = 2000; // milliseconds
-const SPEED = 4; // deg/s 
-const SPEEDRATIO = [0.5, 0.75, 1.25, 1.5];
-const DXY = (DEGRAT * SPEED) / 1000; // pxl/ms
+const ANGLES = [1 * Math.PI / 16, 4 * Math.PI / 4]
+const VIEWCOND = ['FIX', 'OVERT'];
+const VIEWTIME = [100]; // milliseconds
+const PREPTIME = 3500; // milliseconds
+const SPEED = 8; // deg/s
+const SPEEDRANGE = 2;
+const SPEEDRATIO = [0.9];
+const NTRIAL = 10;
+var TRIALCOMBOS = VIEWTIME.flatMap(f => ANGLES.flatMap(d => VIEWCOND.map(v => [f, d, v]))).sort(() => Math.random() - 0.5);
+var blockNo = 0;
+var trialNo = 0;
 var ballNo = 0;
 var tPrep = 0; // milliseconds
 var tAnim = 0; // milliseconds
+var play_dist = [0, 0];
+var play_speed = [0, 0];
+var play_ttc = [0, 0];
 var standard;
+var alternative;
 var view_time;
 var speed_ratio;
 var obj_angle;
 var Interval;
+var test_phase = false;
 
 var struct_scores = {
     'timestamp': [],
@@ -32,14 +43,19 @@ var struct_scores = {
     'obj_angle': [],
     'speed_ratio': [],
     'standard': [],
+    'distances': [],
+    'speeds': [],
+    'ttc': [],
     'select': [],
-    'accuracy': []
+    'accuracy': [],
+    'response': []
 }
 
 //#region MAIN
 window.onload = function () {
     createDots();
 };
+window.addEventListener('keydown', function (e) { testConverge(e) }, false);
 //#endregion
 
 //#region DRAW FUNCTIONS
@@ -56,7 +72,8 @@ function createDots() {
         div.id = 'p' + i;
         div.classList.add('object');
         div.classList.add('player');
-        div.innerHTML = i + 1;
+        div.classList.add('player-' + (i + 1));
+        div.innerHTML = i;
         document.getElementById("main").appendChild(div);
     }
 }
@@ -68,33 +85,29 @@ function initDotPositions(obj_angle) {
     // Players
     for (i = 0; i < NPLAY; i++) {
         el = document.getElementById('p' + i);
-        el.style.left = DIM[0] / 2 + PRAD * Math.cos(i * obj_angle) + "px";
-        el.style.top = DIM[1] / 2 + PRAD * Math.sin(i * obj_angle) + "px";
+        el.style.left = DIM[0] / 2 + play_dist[i] * Math.cos(i * obj_angle) + "px";
+        el.style.top = DIM[1] / 2 + play_dist[i] * Math.sin(i * obj_angle) + "px";
     }
 }
-function initDotConfig(view_cond, speed_ratio, standard) {
-    let alternative = -1 * standard + 1;
+function initDotConfig(view_cond) {
     if (view_cond == "FIX") {
         document.getElementById('b').classList.add('track');
-    }
-    else if (view_cond == "OVERT") {
-        if (speed_ratio < 1) {
-            document.getElementById('p' + standard).classList.add('track');
+    } else if (view_cond == "OVERT") {
+        if (play_ttc[0] < play_ttc[1]) {
+            document.getElementById('p0').classList.add('track');
         } else {
-            document.getElementById('p' + alternative).classList.add('track');
+            document.getElementById('p1').classList.add('track');
         }
-    }
-    else if (view_cond == "COVERT") {
-        if (speed_ratio > 1) {
-            document.getElementById('p' + standard).classList.add('track');
+    } else if (view_cond == "COVERT") {
+        if (play_ttc[0] > play_ttc[1]) {
+            document.getElementById('p0').classList.add('track');
         } else {
-            document.getElementById('p' + alternative).classList.add('track');
+            document.getElementById('p1').classList.add('track');
         }
     }
     document.getElementById('b').classList.add('prep');
     document.getElementById('p0').classList.add('prep');
     document.getElementById('p1').classList.add('prep');
-    console.log([view_cond, speed_ratio, standard])
 }
 function removeDots() {
     // Ball
@@ -107,13 +120,8 @@ function removeDots() {
 function drawFrame(tAnim) {
     for (i = 0; i < NPLAY; i++) {
         el = document.getElementById('p' + i);
-        if (i == standard) {
-            el.style.left = DIM[0] / 2 + (PRAD - DXY * tAnim) * Math.cos(i * obj_angle) + 'px';
-            el.style.top = DIM[1] / 2 + (PRAD - DXY * tAnim) * Math.sin(i * obj_angle) + "px";
-        } else {
-            el.style.left = DIM[0] / 2 + (PRAD - DXY * tAnim * speed_ratio) * Math.cos(i * obj_angle) + 'px';
-            el.style.top = DIM[1] / 2 + (PRAD - DXY * tAnim * speed_ratio) * Math.sin(i * obj_angle) + "px";
-        }
+        el.style.left = DIM[0] / 2 + (play_dist[i] - ((DEGRAT * play_speed[i]) / 1000) * tAnim) * Math.cos(i * obj_angle) + 'px';
+        el.style.top = DIM[1] / 2 + (play_dist[i] - ((DEGRAT * play_speed[i]) / 1000) * tAnim) * Math.sin(i * obj_angle) + "px";
     }
 }
 function initStim() {
@@ -130,12 +138,10 @@ function initStim() {
             drawFrame(tAnim);
             tAnim += 1000 / FS;
         } else {
-            for (i = 0; i < NPLAY; i++) {
-                el = document.getElementById('p' + i);
-                el.onclick = function () {
-                    testConverge(this);
-                }
-            }
+            test_phase = true;
+            document.getElementById('p0').classList.add('hide')
+            document.getElementById('p1').classList.add('hide')
+
             clearInterval(Interval);
         }
     }
@@ -143,73 +149,97 @@ function initStim() {
 
 //#region INTERFACE
 btnPlay.onclick = function () {
-    // REMOVE VISUALS
-    removeDots();
-    // CREATE VISUALS
-    createDots();
-    // SET TRIAL PARAMETERS
-    // Set View Time
-    view_time = VIEWTIME[Math.floor(Math.random() * VIEWTIME.length)];
-    // Set Speed Ratio
-    speed_ratio = SPEEDRATIO[Math.floor(Math.random() * SPEEDRATIO.length)];
-    // Set Standard Target
-    standard = Math.round(Math.random());
-    // Set View Condition
-    var view_cond = VIEWCOND[Math.floor(Math.random() * VIEWCOND.length)];
-    // Set Approach Angle
-    let orient = Math.round(Math.random()) * 2 - 1;
-    obj_angle = orient * ANGLES[Math.floor(Math.random() * ANGLES.length)];
-    // SET TRIAL SCENE
-    initDotPositions(obj_angle);
-    initDotConfig(view_cond, speed_ratio, standard);
-    // RESET TIME
-    tPrep = 0;
-    tAnim = 0;
-    // CAPTURE SYSTEM TIME
-    var timestamp = new Date();
-    var time = timestamp.getHours() + ":" +
-        timestamp.getMinutes() + ":" +
-        timestamp.getSeconds() + "." +
-        timestamp.getMilliseconds();
-    // INITIATE SCORE STRUCT
-    struct_scores.timestamp.push(time);
-    struct_scores.trial.push(struct_scores.trial.length);
-    struct_scores.view_time.push(view_time);
-    struct_scores.view_cond.push(view_cond);
-    struct_scores.obj_angle.push(obj_angle);
-    struct_scores.speed_ratio.push(speed_ratio);
-    struct_scores.standard.push(standard);
+    if (TRIALCOMBOS.length == 0) {
+        blockNo++;
+        TRIALCOMBOS = VIEWTIME.flatMap(f => ANGLES.flatMap(d => VIEWCOND.map(v => [f, d, v]))).sort(() => Math.random() - 0.5);
+    }
+    if (blockNo < NTRIAL) {
+        trialNo++;
+        this.innerHTML = 'Play : ' + trialNo;
+        // REMOVE VISUALS
+        removeDots();
+        // CREATE VISUALS
+        createDots();
+        // SET TRIAL PARAMETERS
+        txtCond.innerHTML = TRIALCOMBOS[TRIALCOMBOS.length - 1];
+        // Set View Time
+        view_time = TRIALCOMBOS[TRIALCOMBOS.length - 1][0];//VIEWTIME[Math.floor(Math.random() * VIEWTIME.length)];
+        // Set Speed Ratio
+        speed_ratio = SPEEDRATIO[Math.floor(Math.random() * SPEEDRATIO.length)];
+        // Set Standard
+        standard = Math.round(Math.random());
+        alternative = -1 * standard + 1;
+        // Set Distances
+        play_dist = [Math.random() * PRANGE + PRAD, Math.random() * PRANGE + PRAD];
+        // Set Speeds
+        play_speed[standard] = Math.random() * SPEEDRANGE + SPEED;
+        play_speed[alternative] = play_speed[standard] * speed_ratio;
+        // Set TTC
+        play_ttc = [play_dist[0] / play_speed[0], play_dist[1] / play_speed[1]];
+        // Set View Condition
+        var view_cond = TRIALCOMBOS[TRIALCOMBOS.length - 1][2];//VIEWCOND[Math.floor(Math.random() * VIEWCOND.length)];
+        // Set Approach Angle
+        let orient = Math.round(Math.random()) * 2 - 1;
+        obj_angle = orient * TRIALCOMBOS[TRIALCOMBOS.length - 1][1];//ANGLES[Math.floor(Math.random() * ANGLES.length)];
+        // UPDATE TRIAL LIST
+        TRIALCOMBOS.pop();
+        // SET TRIAL SCENE
+        initDotPositions(obj_angle);
+        initDotConfig(view_cond);
+        // RESET TIME
+        tPrep = 0;
+        tAnim = 0;
+        // CAPTURE SYSTEM TIME
+        var timestamp = new Date();
+        var time = timestamp.getHours() + ":" +
+            timestamp.getMinutes() + ":" +
+            timestamp.getSeconds() + "." +
+            timestamp.getMilliseconds();
+        // INITIATE SCORE STRUCT
+        struct_scores.timestamp.push(time);
+        struct_scores.trial.push(struct_scores.trial.length);
+        struct_scores.view_time.push(view_time);
+        struct_scores.view_cond.push(view_cond);
+        struct_scores.obj_angle.push(obj_angle);
+        struct_scores.speed_ratio.push(speed_ratio);
+        struct_scores.standard.push(standard);
+        struct_scores.distances.push(play_dist);
+        struct_scores.speeds.push(play_speed);
+        struct_scores.ttc.push(play_ttc);
 
-    // START ANIMATION
-    clearInterval(Interval);
-    Interval = setInterval(initStim, 1000 / FS);
+        // START ANIMATION
+        clearInterval(Interval);
+        Interval = setInterval(initStim, 1000 / FS);
+    }
 }
 //#endregion
 
 //#region TEST
-function testConverge(el) {
-    testNo = el.id[1];
-    let accurate = 0;
-    if (testNo == standard) {
-        if (speed_ratio < 1) {
-            el.classList.add('test-cor');
-            accurate = 1;
+function testConverge(e) {
+    if (test_phase) {
+        let accurate = 0;
+        if (e.key == standard) {
+            if (speed_ratio < 1) {
+                document.getElementById('b').classList.add('test-cor');
+                accurate = 1;
+            } else {
+                document.getElementById('b').classList.add('test-inc');
+            }
         } else {
-            el.classList.add('test-inc');
+            if (speed_ratio > 1) {
+                document.getElementById('b').classList.add('test-cor');
+                accurate = 1;
+            } else {
+                document.getElementById('b').classList.add('test-inc');
+            }
         }
-    } else {
-        if (speed_ratio > 1) {
-            el.classList.add('test-cor');
-            accurate = 1;
-        } else {
-            el.classList.add('test-inc');
-        }
-    }
 
-    // ACCUMULATE SCORES
-    struct_scores.select.push(parseInt(testNo));
-    struct_scores.accuracy.push(accurate);
-    console.log(struct_scores);
+        // ACCUMULATE SCORES
+        struct_scores.select.push(parseInt(e.key));
+        struct_scores.accuracy.push(accurate);
+
+        test_phase = false;
+    }
 }
 //#endregion
 
@@ -219,7 +249,6 @@ btnSave.onclick = function () {
     var timeElapsed = Date.now();
     var today = new Date(timeElapsed);
     var fileName = today.toUTCString().replace(',', '').replace(':', '_').replace(':', '_') + '_SCORES.txt';
-    console.log(fileName)
     saveAs(blob, fileName);
 }
 //#endregion

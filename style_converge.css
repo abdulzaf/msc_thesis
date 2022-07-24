@@ -4,6 +4,8 @@ body {
     height: 100%;
     margin: 0;
     cursor: crosshair;
+    background-color: black;
+    justify-content: center;
 }
 
 #main {
@@ -11,12 +13,16 @@ body {
     height: 682px;
     background-color: black;
     position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .object {
     width: 20px;
     height: 20px;
-    font-size: 10px;
+    font-size: 15px;
+    font-weight: bold;
     text-align: center;
     align-items: center;
     background-color: white;
@@ -25,29 +31,47 @@ body {
 }
 
 .player {
-    font-size: 10px;
     text-align: center;
     align-items: center;
-    color: white;
+    color: black;
     border-radius: 50%;
 }
 
 .prep {
+    color: black;
     background-color: yellow;
 }
 
 .track {
-    background-color: red;
+    border-style: solid;
+    border-width: 5px;
+    border-color: greenyellow;
+}
+
+.hide {
+    visibility: hidden;
 }
 
 .test-cor {
     border-color: greenyellow;
     border-style: solid;
-    border-width: 2px;
+    border-width: 8px;
 }
 
 .test-inc {
     border-color: red;
     border-style: solid;
-    border-width: 2px;
+    border-width: 8px;
+}
+
+.player-1 {
+    background-color: red;
+}
+
+.player-2 {
+    background-color: blue;
+}
+
+#condition {
+    color: white;
 }
