@@ -7,17 +7,17 @@ const NPLAY = 2;
 const NBALL = 1;
 const DIM = [1024, 682];
 const AREA = 600;
-const PRAD = 300;
+const PRAD = 250;
 const PRANGE = 50;
 const DEGRAT = 40; // pxl/deg
-const ANGLES = [1 * Math.PI / 16, 4 * Math.PI / 4]
-const VIEWCOND = ['FIX', 'OVERT'];
-const VIEWTIME = [100]; // milliseconds
+const ANGLES = [16 * Math.PI / 16]
+const VIEWCOND = ['FIX', 'OVERT', 'COVERT'];
+const VIEWTIME = [150]; // milliseconds
 const PREPTIME = 3500; // milliseconds
-const SPEED = 8; // deg/s
+const SPEED = 5; // deg/s
 const SPEEDRANGE = 2;
 const SPEEDRATIO = [0.9];
-const NTRIAL = 10;
+const NTRIAL = 5;
 var TRIALCOMBOS = VIEWTIME.flatMap(f => ANGLES.flatMap(d => VIEWCOND.map(v => [f, d, v]))).sort(() => Math.random() - 0.5);
 var blockNo = 0;
 var trialNo = 0;
@@ -30,10 +30,12 @@ var play_ttc = [0, 0];
 var standard;
 var alternative;
 var view_time;
+var view_cond;
 var speed_ratio;
 var obj_angle;
 var Interval;
 var test_phase = false;
+var scores = [0,0,0];
 
 var struct_scores = {
     'timestamp': [],
@@ -55,7 +57,12 @@ var struct_scores = {
 window.onload = function () {
     createDots();
 };
-window.addEventListener('keydown', function (e) { testConverge(e) }, false);
+window.addEventListener('keydown', function (e) { 
+    if (e.key==" ") {
+        startTrial()
+    } else {
+        testConverge(e)
+    }}, false);
 //#endregion
 
 //#region DRAW FUNCTIONS
@@ -77,7 +84,7 @@ function createDots() {
         document.getElementById("main").appendChild(div);
     }
 }
-function initDotPositions(obj_angle) {
+function initDotPositions() {
     // Balls
     el = document.getElementById('b');
     el.style.left = DIM[0] / 2 + "px";
@@ -89,7 +96,7 @@ function initDotPositions(obj_angle) {
         el.style.top = DIM[1] / 2 + play_dist[i] * Math.sin(i * obj_angle) + "px";
     }
 }
-function initDotConfig(view_cond) {
+function initDotConfig() {
     if (view_cond == "FIX") {
         document.getElementById('b').classList.add('track');
     } else if (view_cond == "OVERT") {
@@ -148,14 +155,14 @@ function initStim() {
 }
 
 //#region INTERFACE
-btnPlay.onclick = function () {
+function startTrial() {
     if (TRIALCOMBOS.length == 0) {
         blockNo++;
         TRIALCOMBOS = VIEWTIME.flatMap(f => ANGLES.flatMap(d => VIEWCOND.map(v => [f, d, v]))).sort(() => Math.random() - 0.5);
     }
     if (blockNo < NTRIAL) {
         trialNo++;
-        this.innerHTML = 'Play : ' + trialNo;
+        btnPlay.innerHTML = 'Play : ' + trialNo;
         // REMOVE VISUALS
         removeDots();
         // CREATE VISUALS
@@ -177,15 +184,15 @@ btnPlay.onclick = function () {
         // Set TTC
         play_ttc = [play_dist[0] / play_speed[0], play_dist[1] / play_speed[1]];
         // Set View Condition
-        var view_cond = TRIALCOMBOS[TRIALCOMBOS.length - 1][2];//VIEWCOND[Math.floor(Math.random() * VIEWCOND.length)];
+        view_cond = TRIALCOMBOS[TRIALCOMBOS.length - 1][2];//VIEWCOND[Math.floor(Math.random() * VIEWCOND.length)];
         // Set Approach Angle
         let orient = Math.round(Math.random()) * 2 - 1;
         obj_angle = orient * TRIALCOMBOS[TRIALCOMBOS.length - 1][1];//ANGLES[Math.floor(Math.random() * ANGLES.length)];
         // UPDATE TRIAL LIST
         TRIALCOMBOS.pop();
         // SET TRIAL SCENE
-        initDotPositions(obj_angle);
-        initDotConfig(view_cond);
+        initDotPositions();
+        initDotConfig();
         // RESET TIME
         tPrep = 0;
         tAnim = 0;
@@ -239,6 +246,16 @@ function testConverge(e) {
         struct_scores.accuracy.push(accurate);
 
         test_phase = false;
+
+        // LOG SCORES
+        if (view_cond=="FIX") {
+            scores[0]+=accurate;
+        } else if (view_cond=="OVERT") {
+            scores[1]+=accurate;
+        } else if (view_cond=="COVERT") {
+            scores[2]+=accurate;
+        }
+        console.log(scores)
     }
 }
 //#endregion
